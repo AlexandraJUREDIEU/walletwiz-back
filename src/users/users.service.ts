@@ -26,4 +26,12 @@ export class UsersService {
       where: { id },
     });
   }
+
+  // 🔹 Mettre à jour un utilisateur
+  async update(userId: number, data: any) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data,
+    });
+  }
 }
