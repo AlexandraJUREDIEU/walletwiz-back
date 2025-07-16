@@ -59,6 +59,10 @@ export class AuthService {
     return {
       message: 'Email verified successfully',
       accessToken: token,
+      user: {
+        id: user.id,
+        email: user.email
+      }
     };
   }
 
@@ -84,6 +88,10 @@ export class AuthService {
     return {
       message: 'Connexion réussie',
       accessToken,
+      user: {
+        id: user.id,
+        email: user.email
+      }
     };
   }
 }
