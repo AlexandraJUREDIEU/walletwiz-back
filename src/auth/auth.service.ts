@@ -4,6 +4,7 @@ import { MailService } from '../mail/mail.service';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from './dto/register.dto';
 import { VerifyDto } from './dto/verify.dto';
+import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
@@ -32,32 +33,57 @@ export class AuthService {
   }
 
   async verify(dto: VerifyDto) {
-  const user = await this.usersService.findByEmail(dto.email);
+    const user = await this.usersService.findByEmail(dto.email);
 
-  if (!user) {
-    throw new NotFoundException('User not found');
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.emailVerified) {
+      throw new BadRequestException('User already verified');
+    }
+
+    if (user.verificationCode !== dto.code) {
+      throw new UnauthorizedException('Invalid verification code');
+    }
+
+    // Mise à jour du user : vérifié + suppression du code
+    await this.usersService.update(user.id, {
+      emailVerified: true,
+      verificationCode: null,
+    });
+
+    const payload = { sub: user.id, email: user.email };
+    const token = await this.jwtService.signAsync(payload);
+
+    return {
+      message: 'Email verified successfully',
+      accessToken: token,
+    };
   }
 
-  if (user.emailVerified) {
-    throw new BadRequestException('User already verified');
+  async login(dto: LoginDto) {
+    const user = await this.usersService.findByEmail(dto.email);
+
+    if (!user) {
+      throw new UnauthorizedException('Email ou mot de passe invalide');
+    }
+
+    const isPasswordValid = await bcrypt.compare(dto.password, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Email ou mot de passe invalide');
+    }
+
+    if (!user.emailVerified) {
+      throw new UnauthorizedException('Veuillez vérifier votre adresse email');
+    }
+
+    const payload = { sub: user.id, email: user.email };
+    const accessToken = await this.jwtService.signAsync(payload);
+
+    return {
+      message: 'Connexion réussie',
+      accessToken,
+    };
   }
-
-  if (user.verificationCode !== dto.code) {
-    throw new UnauthorizedException('Invalid verification code');
-  }
-
-  // Mise à jour du user : vérifié + suppression du code
-  await this.usersService.update(user.id, {
-    emailVerified: true,
-    verificationCode: null,
-  });
-
-  const payload = { sub: user.id, email: user.email };
-  const token = await this.jwtService.signAsync(payload);
-
-  return {
-    message: 'Email verified successfully',
-    accessToken: token,
-  };
-}
 }
