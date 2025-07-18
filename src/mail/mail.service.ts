@@ -1,31 +1,36 @@
 import { Injectable } from '@nestjs/common';
-import { MailerService } from '@nestjs-modules/mailer';
 import { ConfigService } from '@nestjs/config';
+import * as SibApiV3Sdk from 'sib-api-v3-sdk';
 
 @Injectable()
 export class MailService {
-  constructor(
-    private readonly mailerService: MailerService,
-    private readonly configService: ConfigService,
-  ) {}
+  private readonly brevoApi: SibApiV3Sdk.TransactionalEmailsApi;
+
+  constructor(private readonly configService: ConfigService) {
+    const brevoClient = SibApiV3Sdk.ApiClient.instance;
+    const apiKey = brevoClient.authentications['api-key'];
+    apiKey.apiKey = this.configService.get<string>('BREVO_API_KEY');
+
+    this.brevoApi = new SibApiV3Sdk.TransactionalEmailsApi();
+  }
 
   async sendVerificationCode(email: string, code: string) {
-    // 🔄 Si on est en développement, forcer l’envoi vers un email de test
     const env = this.configService.get<string>('NODE_ENV');
     const forceTo = this.configService.get<string>('FORCE_EMAIL_TO');
     const recipient = env === 'development' && forceTo ? forceTo : email;
 
-    // ✅ Log pour confirmation
-    console.log(`📩 Envoi du mail à : ${recipient}`);
+    const senderEmail = this.configService.get<string>('EMAIL_FROM') || 'no-reply@atwodigitalagency.com';
 
-    await this.mailerService.sendMail({
-      to: recipient,
-      subject: 'Vérification de votre email',
-      template: './verify', // le template est optionnel si on envoie du texte brut
-      context: {
+    console.log(`📩 Envoi du mail via Brevo à : ${recipient}`);
+
+    await this.brevoApi.sendTransacEmail({
+      to: [{ email: recipient }],
+      sender: { name: 'WalletWiz', email: senderEmail },
+      subject: 'Votre code WalletWiz',
+      templateId: 6, // ⬅️ Remplace par ton vrai ID de template Brevo
+      params: {
         code,
       },
-      html: `<p>Votre code de vérification est : <strong>${code}</strong></p>`,
     });
   }
 }
