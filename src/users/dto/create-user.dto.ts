@@ -11,4 +11,7 @@ export class CreateUserDto {
   @IsOptional()
   @IsString()
   verificationCode?: string;
+
+  @IsOptional()
+  verificationCodeExpiresAt?: Date;
 }

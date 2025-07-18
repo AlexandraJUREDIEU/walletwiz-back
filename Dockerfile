@@ -1,17 +1,16 @@
 # Dockerfile - BACK
-FROM node:20.13.1-slim
+FROM node:20
 
 WORKDIR /app
 
-# Étape 1 : copier les dépendances
-COPY package.json package-lock.json ./
+COPY package*.json ./
+RUN npm install
 
-RUN npm ci
-
-# Étape 2 : copier le reste du code
 COPY . .
+
+# Ajoute cette ligne AVANT le build final
+RUN npx prisma generate
 
 RUN npm run build
 
-EXPOSE 3000
-CMD ["node", "dist/main"]
+CMD ["npm", "run", "start:prod"]

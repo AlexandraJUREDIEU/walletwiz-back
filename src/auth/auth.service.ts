@@ -18,11 +18,13 @@ export class AuthService {
   async register(dto: RegisterDto) {
     const hashedPassword = await bcrypt.hash(dto.password, 10);
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString(); // Code 6 chiffres
+    const verificationCodeExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     const user = await this.usersService.create({
       ...dto,
       password: hashedPassword,
       verificationCode,
+      verificationCodeExpiresAt,
     });
 
     await this.mailService.sendVerificationCode(user.email, verificationCode);
@@ -43,15 +45,20 @@ export class AuthService {
       throw new BadRequestException('User already verified');
     }
 
-    if (user.verificationCode !== dto.code) {
-      throw new UnauthorizedException('Invalid verification code');
-    }
+    if (
+      user.verificationCode !== dto.code ||
+     !user.verificationCodeExpiresAt ||
+      user.verificationCodeExpiresAt < new Date()
+    ) {
+      throw new UnauthorizedException('Code invalide ou expiré');
+  }
 
     // Mise à jour du user : vérifié + suppression du code
     await this.usersService.update(user.id, {
       emailVerified: true,
       verificationCode: null,
-    });
+      verificationCodeExpiresAt: null,
+  });
 
     const payload = { sub: user.id, email: user.email };
     const token = await this.jwtService.signAsync(payload);
