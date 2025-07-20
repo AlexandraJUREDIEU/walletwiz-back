@@ -13,6 +13,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum MemberRole {
+  OWNER
+  ADULT
+  CHILD
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
 model User {
   id                          Int       @id @default(autoincrement())
   email                       String    @unique
@@ -31,10 +43,27 @@ model User {
 
 model Session {
   id          String   @id @default(uuid())
-  name        String
+  name        String?
   ownerId     String
   owner       User     @relation(fields: [ownerId], references: [id])
   budgets     Budget[]
   members     SessionMember[]
   createdAt   DateTime @default(now())
+}
+
+model SessionMember {
+  id               String         @id @default(uuid())
+  sessionId        String
+  userId           String?
+  role             MemberRole     @default(ADULT)
+  invitationStatus InvitationStatus @default(PENDING)
+  invitedEmail     String         // utilisé si userId est null (utilisateur pas encore inscrit)
+  inviteToken      String?        @unique
+  invitedAt        DateTime       @default(now())
+  acceptedAt       DateTime?
+
+  session          Session        @relation(fields: [sessionId], references: [id])
+  user             User?          @relation(fields: [userId], references: [id])
+
+  @@unique([sessionId, userId])
 }
