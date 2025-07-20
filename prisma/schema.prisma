@@ -19,6 +19,8 @@ model User {
   password                    String
   firstName                   String?
   lastName                    String?
+  status                      String?
+  avatarUrl                   String?
   emailVerified               Boolean   @default(false)
   verificationCode            String?
   verificationCodeExpiresAt   DateTime?
