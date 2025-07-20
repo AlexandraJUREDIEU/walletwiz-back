@@ -1,34 +1,26 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Param,
+  Body,
+  UseGuards,
+} from '@nestjs/common';
 import { SessionMembersService } from './session-members.service';
 import { CreateSessionMemberDto } from './dto/create-session-member.dto';
-import { UpdateSessionMemberDto } from './dto/update-session-member.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CurrentUser } from '../common/decorators/user.decorator';
 
-@Controller('session-members')
+@UseGuards(JwtAuthGuard)
+@Controller('sessions/:id/invite')
 export class SessionMembersController {
   constructor(private readonly sessionMembersService: SessionMembersService) {}
 
   @Post()
-  create(@Body() createSessionMemberDto: CreateSessionMemberDto) {
-    return this.sessionMembersService.create(createSessionMemberDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.sessionMembersService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.sessionMembersService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSessionMemberDto: UpdateSessionMemberDto) {
-    return this.sessionMembersService.update(+id, updateSessionMemberDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.sessionMembersService.remove(+id);
+  invite(
+    @Param('id') sessionId: string,
+    @CurrentUser() user: { id: string },
+    @Body() dto: CreateSessionMemberDto
+  ) {
+    return this.sessionMembersService.invite(sessionId, user.id, dto);
   }
 }
