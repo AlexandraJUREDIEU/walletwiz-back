@@ -25,4 +25,16 @@ model User {
   verificationCode            String?
   verificationCodeExpiresAt   DateTime?
   createdAt                   DateTime  @default(now())
+  sessionsOwned               Session[] @relation("UserOwnedSessions")
+  sessionMembers              SessionMember[]
+}
+
+model Session {
+  id          String   @id @default(uuid())
+  name        String
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id])
+  budgets     Budget[]
+  members     SessionMember[]
+  createdAt   DateTime @default(now())
 }
