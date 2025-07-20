@@ -11,16 +11,19 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/user.decorator';
 
 @UseGuards(JwtAuthGuard)
-@Controller('sessions/:id/invite')
+@Controller('sessions')
 export class SessionMembersController {
   constructor(private readonly sessionMembersService: SessionMembersService) {}
 
-  @Post()
+  @Post(':id/invite')
   invite(
     @Param('id') sessionId: string,
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { sub: string },
     @Body() dto: CreateSessionMemberDto
   ) {
-    return this.sessionMembersService.invite(sessionId, user.id, dto);
+    console.log('🔥 SessionMembersController: invite() called');
+    console.log('sessionId:', sessionId);
+    console.log('user:', user);
+    return this.sessionMembersService.invite(sessionId, user.sub, dto);
   }
 }

@@ -1,0 +1,20 @@
+services:
+  mysql:
+    image: mysql
+    container_name: mysql
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+    ports:
+      - '3399:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - walletwiz
+
+volumes:
+  mysql_data:
+    name: walletwiz
+
+networks:
+  walletwiz:
+    name: walletwiz

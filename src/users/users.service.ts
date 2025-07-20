@@ -21,14 +21,14 @@ export class UsersService {
   }
 
   // 🔹 Trouver un utilisateur par ID
-  async findById(id: number) {
+  async findById(id: string) {
     return this.prisma.user.findUnique({
       where: { id },
     });
   }
 
   // 🔹 Mettre à jour un utilisateur
-  async update(userId: number, data: any) {
+  async update(userId: string, data: any) {
     return this.prisma.user.update({
       where: { id: userId },
       data,

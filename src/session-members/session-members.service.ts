@@ -13,6 +13,7 @@ export class SessionMembersService {
   ) {}
 
   async invite(sessionId: string, ownerId: string, dto: CreateSessionMemberDto) {
+    console.log('Tentative d\'invitation par userId :', ownerId);
     const session = await this.prisma.session.findUnique({
       where: { id: sessionId },
       include: {
@@ -24,6 +25,11 @@ export class SessionMembersService {
     if (!session) throw new NotFoundException('Session not found');
 
     const isOwner = session.ownerId === ownerId;
+    console.log({
+  fromToken: ownerId,
+  fromSession: session.ownerId,
+  equal: ownerId === session.ownerId,
+});
     if (!isOwner) throw new ForbiddenException('Only session owner can invite');
 
     const alreadyInvited = session.members.find(
@@ -41,7 +47,7 @@ export class SessionMembersService {
       data: {
         sessionId,
         userId: existingUser?.id ?? null,
-        role: dto.role,
+        role: dto.role ?? MemberRole.ADULT,
         invitationStatus: InvitationStatus.PENDING,
         invitedEmail: dto.email,
         inviteToken,

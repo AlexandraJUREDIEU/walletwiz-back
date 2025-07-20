@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Req } from '@nestjs/common';
 import { SessionsService } from './sessions.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -10,11 +10,13 @@ export class SessionsController {
   constructor(private readonly sessionsService: SessionsService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   create(
-    @CurrentUser() user: { id: string },
-    @Body() createSessionDto: CreateSessionDto
+        @Body() createSessionDto: CreateSessionDto,
+        @Req() req: any,
   ) {
-    return this.sessionsService.create(user.id, createSessionDto);
+    const userId = req.user?.sub; // Assuming user is attached to the request by JwtAuthGuard
+    return this.sessionsService.create(userId, req.user?.email, createSessionDto);
   }
 
   @Get()

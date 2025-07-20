@@ -6,17 +6,17 @@ import { CreateSessionDto } from './dto/create-session.dto';
 export class SessionsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(userId: string, dto: CreateSessionDto) {
+  async create(userId: string, email: string, dto: CreateSessionDto) {
     return this.prisma.session.create({
       data: {
         name: dto.name ?? null,
         ownerId: userId,
         members: {
           create: {
-            userId,
+            userId: userId,
             role: 'OWNER',
             invitationStatus: 'ACCEPTED',
-            invitedEmail: '', // pas nécessaire pour l'owner
+            invitedEmail: email, 
           },
         },
       },
