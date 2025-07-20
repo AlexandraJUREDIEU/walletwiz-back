@@ -33,4 +33,33 @@ export class MailService {
       },
     });
   }
+
+  async sendInvitationEmail({
+    to,
+    invitedBy,
+    link,
+  }: {
+    to: string;
+    invitedBy: string;
+    link: string;
+  }) {
+    const env = this.configService.get<string>('NODE_ENV');
+    const forceTo = this.configService.get<string>('FORCE_EMAIL_TO');
+    const recipient = env === 'development' && forceTo ? forceTo : to;
+
+    const senderEmail = this.configService.get<string>('EMAIL_FROM') || 'no-reply@atwodigitalagency.com';
+
+    console.log(`📩 Envoi du mail d'invitation via Brevo à : ${recipient}`);
+
+    await this.brevoApi.sendTransacEmail({
+      to: [{ email: recipient }],
+      sender: { name: 'WalletWiz', email: senderEmail },
+      subject: 'Invitation à rejoindre une session',
+      templateId: 7, // ⬅️ Remplace par ton vrai ID de template Brevo
+      params: {
+        invitedBy,
+        link,
+      },
+    });
+  }
 }
