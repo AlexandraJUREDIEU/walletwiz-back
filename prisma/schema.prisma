@@ -52,18 +52,25 @@ model Session {
 }
 
 model SessionMember {
-  id               String         @id @default(uuid())
+  id               String           @id @default(uuid())
   sessionId        String
   userId           String?
-  role             MemberRole     @default(ADULT)
+  role             MemberRole       @default(ADULT)
   invitationStatus InvitationStatus @default(PENDING)
-  invitedEmail     String         // utilisé si userId est null (utilisateur pas encore inscrit)
-  inviteToken      String?        @unique
-  invitedAt        DateTime       @default(now())
+  invitedEmail     String         
+  inviteToken      String?          @unique
+  invitedAt        DateTime         @default(now())
   acceptedAt       DateTime?
-
-  session          Session        @relation(fields: [sessionId], references: [id])
-  user             User?          @relation(fields: [userId], references: [id])
-
+  session          Session          @relation(fields: [sessionId], references: [id])
+  user             User?            @relation(fields: [userId], references: [id])
   @@unique([sessionId, userId])
+}
+
+model Budget {
+  id         String   @id @default(uuid())
+  sessionId  String
+  month      String   // format YYYY-MM, ex : "2025-08"
+  createdAt  DateTime @default(now())
+  session    Session  @relation(fields: [sessionId], references: [id])
+  @@unique([sessionId, month])
 }
