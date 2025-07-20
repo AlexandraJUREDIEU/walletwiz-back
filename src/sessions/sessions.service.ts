@@ -1,26 +1,39 @@
 import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateSessionDto } from './dto/create-session.dto';
-import { UpdateSessionDto } from './dto/update-session.dto';
 
 @Injectable()
 export class SessionsService {
-  create(createSessionDto: CreateSessionDto) {
-    return 'This action adds a new session';
+  constructor(private readonly prisma: PrismaService) {}
+
+  async create(userId: string, dto: CreateSessionDto) {
+    return this.prisma.session.create({
+      data: {
+        name: dto.name ?? null,
+        ownerId: userId,
+        members: {
+          create: {
+            userId,
+            role: 'OWNER',
+            invitationStatus: 'ACCEPTED',
+            invitedEmail: '', // pas nécessaire pour l'owner
+          },
+        },
+      },
+    });
   }
 
-  findAll() {
-    return `This action returns all sessions`;
-  }
+  async findAllByUser(userId: string) {
+    const memberships = await this.prisma.sessionMember.findMany({
+      where: {
+        userId,
+        invitationStatus: 'ACCEPTED',
+      },
+      include: {
+        session: true,
+      },
+    });
 
-  findOne(id: number) {
-    return `This action returns a #${id} session`;
-  }
-
-  update(id: number, updateSessionDto: UpdateSessionDto) {
-    return `This action updates a #${id} session`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} session`;
+    return memberships.map((m) => m.session);
   }
 }
