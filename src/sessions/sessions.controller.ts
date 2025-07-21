@@ -2,7 +2,6 @@ import { Controller, Get, Post, Body, UseGuards, Req } from '@nestjs/common';
 import { SessionsService } from './sessions.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { CurrentUser } from '../common/decorators/user.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('sessions')
@@ -20,7 +19,8 @@ export class SessionsController {
   }
 
   @Get()
-  findAll(@CurrentUser() user: { id: string }) {
-    return this.sessionsService.findAllByUser(user.id);
+  findAll(@Req() req: any) {
+    const userId = req.user?.sub;
+    return this.sessionsService.findAllByUser(userId);
   }
 }

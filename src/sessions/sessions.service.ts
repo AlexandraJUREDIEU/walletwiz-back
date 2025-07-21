@@ -24,16 +24,11 @@ export class SessionsService {
   }
 
   async findAllByUser(userId: string) {
-    const memberships = await this.prisma.sessionMember.findMany({
+      // Retourne uniquement les sessions dont l'utilisateur est propriétaire
+    return this.prisma.session.findMany({
       where: {
-        userId,
-        invitationStatus: 'ACCEPTED',
-      },
-      include: {
-        session: true,
+        ownerId: userId,
       },
     });
-
-    return memberships.map((m) => m.session);
   }
 }
