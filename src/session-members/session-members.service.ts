@@ -76,4 +76,26 @@ export class SessionMembersService {
 
     return { message: 'Invitation sent', email: dto.email };
   }
+
+  // * Methode pour récupérer une invitation par son token
+  async getInvitationByToken(token: string) {
+    const invitation = await this.prisma.sessionMember.findUnique({
+      where: { inviteToken: token },
+      include: {
+        session: true,
+      },
+    });
+
+    if (!invitation) {
+      throw new NotFoundException('Invitation not found or expired');
+    }
+
+    return {
+      invitedEmail: invitation.invitedEmail,
+      role: invitation.role,
+      sessionId: invitation.session.id,
+      sessionName: invitation.session.name,
+      invitationStatus: invitation.invitationStatus,
+    };
+  }
 }

@@ -4,6 +4,7 @@ import {
   Param,
   Body,
   UseGuards,
+  Get,
 } from '@nestjs/common';
 import { SessionMembersService } from './session-members.service';
 import { CreateSessionMemberDto } from './dto/create-session-member.dto';
@@ -25,5 +26,10 @@ export class SessionMembersController {
     console.log('sessionId:', sessionId);
     console.log('user:', user);
     return this.sessionMembersService.invite(sessionId, user.sub, dto);
+  }
+
+  @Get('invite/:token')
+  getInvitation(@Param('token') token: string) {
+    return this.sessionMembersService.getInvitationByToken(token);
   }
 }
