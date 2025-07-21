@@ -6,6 +6,7 @@ import { RegisterDto } from './dto/register.dto';
 import { VerifyDto } from './dto/verify.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
+import { SessionsService } from 'src/sessions/sessions.service';
 
 @Injectable()
 export class AuthService {
@@ -13,6 +14,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly mailService: MailService,
     private readonly jwtService: JwtService,
+    private readonly sessionsService: SessionsService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -58,7 +60,13 @@ export class AuthService {
       emailVerified: true,
       verificationCode: null,
       verificationCodeExpiresAt: null,
-  });
+    });
+    // 🔹 Création de la session par défaut
+    await this.sessionsService.create(
+      user.id,
+      user.email,
+      { name: 'WalletWiz - Personnel' }
+    );
 
     const payload = { sub: user.id, email: user.email };
     const token = await this.jwtService.signAsync(payload);
@@ -69,7 +77,7 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email
-      }
+      },   
     };
   }
 
