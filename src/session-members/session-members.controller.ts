@@ -32,4 +32,12 @@ export class SessionMembersController {
   getInvitation(@Param('token') token: string) {
     return this.sessionMembersService.getInvitationByToken(token);
   }
+
+  @Post('invite/:token')
+  acceptInvitation(
+    @Param('token') token: string,
+    @CurrentUser() user: { sub: string }
+  ) {
+    return this.sessionMembersService.acceptInvitationByToken(token, user.sub);
+  }
 }

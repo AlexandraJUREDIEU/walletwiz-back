@@ -98,4 +98,38 @@ export class SessionMembersService {
       invitationStatus: invitation.invitationStatus,
     };
   }
+
+  // * Methode pour accepter une invitation
+  async acceptInvitationByToken(token: string, userId: string) {
+  const invitation = await this.prisma.sessionMember.findUnique({
+    where: { inviteToken: token },
+  });
+
+  if (!invitation) {
+    throw new NotFoundException('Invitation not found or expired');
+  }
+
+  if (invitation.invitationStatus === 'ACCEPTED') {
+    throw new BadRequestException('Invitation already accepted');
+  }
+
+  if (invitation.userId && invitation.userId !== userId) {
+    throw new ForbiddenException('This invitation is not for your account');
+  }
+
+    // Mise à jour de l'invitation
+    await this.prisma.sessionMember.update({
+      where: { inviteToken: token },
+      data: {
+        userId,
+        invitationStatus: 'ACCEPTED',
+        acceptedAt: new Date(),
+      },
+    });
+
+    return {
+      message: 'Invitation accepted',
+      sessionId: invitation.sessionId,
+    };
+  }
 }
