@@ -1,4 +1,9 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSessionMemberDto } from './dto/create-session-member.dto';
 import { v4 as uuidv4 } from 'uuid';
@@ -12,8 +17,12 @@ export class SessionMembersService {
     private readonly mailService: MailService,
   ) {}
 
-  async invite(sessionId: string, ownerId: string, dto: CreateSessionMemberDto) {
-    console.log('Tentative d\'invitation par userId :', ownerId);
+  async invite(
+    sessionId: string,
+    ownerId: string,
+    dto: CreateSessionMemberDto,
+  ) {
+    console.log("Tentative d'invitation par userId :", ownerId);
     const session = await this.prisma.session.findUnique({
       where: { id: sessionId },
       include: {
@@ -26,16 +35,17 @@ export class SessionMembersService {
 
     const isOwner = session.ownerId === ownerId;
     console.log({
-  fromToken: ownerId,
-  fromSession: session.ownerId,
-  equal: ownerId === session.ownerId,
-});
+      fromToken: ownerId,
+      fromSession: session.ownerId,
+      equal: ownerId === session.ownerId,
+    });
     if (!isOwner) throw new ForbiddenException('Only session owner can invite');
 
     const alreadyInvited = session.members.find(
       (m) => m.invitedEmail === dto.email,
     );
-    if (alreadyInvited) throw new BadRequestException('This email is already invited');
+    if (alreadyInvited)
+      throw new BadRequestException('This email is already invited');
 
     const existingUser = await this.prisma.user.findUnique({
       where: { email: dto.email },
@@ -57,7 +67,10 @@ export class SessionMembersService {
     const acceptUrl = `https://wallet-wiz.alexandrajuredieu.fr/invite?token=${inviteToken}`;
     await this.mailService.sendInvitationEmail({
       to: dto.email,
-      invitedBy: `${session.owner.firstName} ${session.owner.lastName}`,
+      invitedBy:
+        session.owner.firstName || session.owner.lastName
+          ? `${session.owner.firstName ?? ''} ${session.owner.lastName ?? ''}`.trim()
+          : session.owner.email,
       link: acceptUrl,
     });
 
