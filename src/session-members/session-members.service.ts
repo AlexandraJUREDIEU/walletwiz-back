@@ -64,7 +64,11 @@ export class SessionMembersService {
       },
     });
 
-    const acceptUrl = `https://wallet-wiz.alexandrajuredieu.fr/invite?token=${inviteToken}`;
+    const acceptUrl =
+      process.env.NODE_ENV === 'production'
+        ? `https://wallet-wiz.alexandrajuredieu.fr/verify-invite?token=${inviteToken}`
+        : `http://localhost:5173/verify-invite?token=${inviteToken}`;
+    console.log('Invitation accept URL:', acceptUrl);
     await this.mailService.sendInvitationEmail({
       to: dto.email,
       invitedBy:

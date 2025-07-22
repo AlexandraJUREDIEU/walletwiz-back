@@ -17,7 +17,7 @@ export class MailService {
   async sendVerificationCode(email: string, code: string) {
     const env = this.configService.get<string>('NODE_ENV');
     const forceTo = this.configService.get<string>('FORCE_EMAIL_TO');
-    const recipient = env === 'development' && forceTo ? forceTo : email;
+    const recipient = env === 'dev' && forceTo ? forceTo : email;
 
     const senderEmail = this.configService.get<string>('EMAIL_FROM') || 'no-reply@atwodigitalagency.com';
 
@@ -45,7 +45,7 @@ export class MailService {
   }) {
     const env = this.configService.get<string>('NODE_ENV');
     const forceTo = this.configService.get<string>('FORCE_EMAIL_TO');
-    const recipient = env === 'development' && forceTo ? forceTo : to;
+    const recipient = env === 'dev' && forceTo ? forceTo : to;
 
     const senderEmail = this.configService.get<string>('EMAIL_FROM') || 'no-reply@atwodigitalagency.com';
 
