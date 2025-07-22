@@ -96,7 +96,7 @@ export class AuthService {
     if (!user.emailVerified) {
       throw new UnauthorizedException('Veuillez vérifier votre adresse email');
     }
-
+    const sessions = await this.sessionsService.findAllByUser(user.id);
     const payload = { sub: user.id, email: user.email };
     const accessToken = await this.jwtService.signAsync(payload);
 
@@ -106,7 +106,13 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email
-      }
+      },
+      sessions: sessions.map(session => ({
+        id: session.id,
+        name: session.name,
+        ownerId: session.ownerId,
+        createdAt: session.createdAt,
+      })),
     };
   }
 }

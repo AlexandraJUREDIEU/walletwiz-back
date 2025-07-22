@@ -15,6 +15,11 @@ import { CurrentUser } from '../common/decorators/user.decorator';
 @Controller('sessions')
 export class SessionMembersController {
   constructor(private readonly sessionMembersService: SessionMembersService) {}
+  
+  @Get(':id/members')
+  findAllBySessionId(@Param('id') sessionId: string , @CurrentUser() user: { sub: string }) {
+    return this.sessionMembersService.getMembersBySession(sessionId, user.sub);
+  }
 
   @Post(':id/invite')
   invite(

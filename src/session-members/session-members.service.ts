@@ -9,6 +9,8 @@ import { CreateSessionMemberDto } from './dto/create-session-member.dto';
 import { v4 as uuidv4 } from 'uuid';
 import { MailService } from '../mail/mail.service';
 import { MemberRole, InvitationStatus } from '@prisma/client';
+import { stat } from 'fs';
+import { first } from 'rxjs';
 
 @Injectable()
 export class SessionMembersService {
@@ -16,7 +18,37 @@ export class SessionMembersService {
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
   ) {}
+  // * Methode pour récupérer les membres d'une session
+  async getMembersBySession(sessionId: string, userId: string) {
+    const session = await this.prisma.session.findUnique({
+      where: { id: sessionId },
+      include: {
+        members: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
 
+    if (!session) throw new NotFoundException('Session not found');
+    if (!session.members) throw new NotFoundException('No members found for this session');
+    if (session.ownerId !== userId) throw new ForbiddenException('You are not the owner of this session');
+
+    const isMember = session.members.some((m) => m.userId === userId);
+    if (!isMember) throw new ForbiddenException('You are not a member of this session');
+
+    return session.members.map((member) => ({
+      id: member.id,
+      email: member.invitedEmail ?? member.user?.email ?? '',
+      firstName: member.user?.firstName,
+      lastName: member.user?.lastName,
+      role: member.role,
+      status: member.invitationStatus,
+    }));
+  }
+
+  // * Methode pour inviter un membre à une session
   async invite(
     sessionId: string,
     ownerId: string,
