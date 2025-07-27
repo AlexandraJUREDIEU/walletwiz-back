@@ -11,12 +11,13 @@ export class SessionsController {
   // * Endpoint to create a new session
   @Post()
   @UseGuards(JwtAuthGuard)
-  create(
-        @Body() createSessionDto: CreateSessionDto,
-        @Req() req: any,
-  ) {
+  create(@Body() createSessionDto: CreateSessionDto, @Req() req: any) {
     const userId = req.user?.sub; // Assuming user is attached to the request by JwtAuthGuard
-    return this.sessionsService.create(userId, req.user?.email, createSessionDto);
+    return this.sessionsService.create(
+      userId,
+      req.user?.email,
+      createSessionDto,
+    );
   }
   // * Endpoint to get all sessions for the authenticated user
   @Get()

@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Post,
-  Param,
-  Body,
-  UseGuards,
-  Get,
-} from '@nestjs/common';
+import { Controller, Post, Param, Body, UseGuards, Get } from '@nestjs/common';
 import { SessionMembersService } from './session-members.service';
 import { CreateSessionMemberDto } from './dto/create-session-member.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -14,10 +7,13 @@ import { CurrentUser } from '../common/decorators/user.decorator';
 @Controller('sessions')
 export class SessionMembersController {
   constructor(private readonly sessionMembersService: SessionMembersService) {}
-  
+
   @UseGuards(JwtAuthGuard)
   @Get(':id/members')
-  findAllBySessionId(@Param('id') sessionId: string , @CurrentUser() user: { sub: string }) {
+  findAllBySessionId(
+    @Param('id') sessionId: string,
+    @CurrentUser() user: { sub: string },
+  ) {
     return this.sessionMembersService.getMembersBySession(sessionId, user.sub);
   }
 
@@ -26,7 +22,7 @@ export class SessionMembersController {
   invite(
     @Param('id') sessionId: string,
     @CurrentUser() user: { sub: string },
-    @Body() dto: CreateSessionMemberDto
+    @Body() dto: CreateSessionMemberDto,
   ) {
     console.log('🔥 SessionMembersController: invite() called');
     console.log('sessionId:', sessionId);
@@ -44,15 +40,13 @@ export class SessionMembersController {
   @Post('invite/:token')
   acceptInvitation(
     @Param('token') token: string,
-    @CurrentUser() user: { sub: string }
+    @CurrentUser() user: { sub: string },
   ) {
     return this.sessionMembersService.acceptInvitationByToken(token, user.sub);
   }
 
   @Post('invite/:token/declined')
-  refuseInvitation(
-    @Param('token') token: string,
-  ) {
+  refuseInvitation(@Param('token') token: string) {
     return this.sessionMembersService.refuseInvitationByToken(token);
   }
 }

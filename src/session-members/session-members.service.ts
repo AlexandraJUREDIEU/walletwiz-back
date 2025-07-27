@@ -30,11 +30,14 @@ export class SessionMembersService {
     });
 
     if (!session) throw new NotFoundException('Session not found');
-    if (!session.members) throw new NotFoundException('No members found for this session');
-    if (session.ownerId !== userId) throw new ForbiddenException('You are not the owner of this session');
+    if (!session.members)
+      throw new NotFoundException('No members found for this session');
+    if (session.ownerId !== userId)
+      throw new ForbiddenException('You are not the owner of this session');
 
     const isMember = session.members.some((m) => m.userId === userId);
-    if (!isMember) throw new ForbiddenException('You are not a member of this session');
+    if (!isMember)
+      throw new ForbiddenException('You are not a member of this session');
 
     return session.members.map((member) => ({
       id: member.id,
@@ -106,7 +109,7 @@ export class SessionMembersService {
 
     console.log('Invitation accept URL:', acceptUrl);
     console.log('Invitation declined URL:', declinedUrl);
-    
+
     await this.mailService.sendInvitationEmail({
       to: dto.email,
       invitedBy:
@@ -144,21 +147,21 @@ export class SessionMembersService {
 
   // * Methode pour accepter une invitation
   async acceptInvitationByToken(token: string, userId: string) {
-  const invitation = await this.prisma.sessionMember.findUnique({
-    where: { inviteToken: token },
-  });
+    const invitation = await this.prisma.sessionMember.findUnique({
+      where: { inviteToken: token },
+    });
 
-  if (!invitation) {
-    throw new NotFoundException('Invitation not found or expired');
-  }
+    if (!invitation) {
+      throw new NotFoundException('Invitation not found or expired');
+    }
 
-  if (invitation.invitationStatus === 'ACCEPTED') {
-    throw new BadRequestException('Invitation already accepted');
-  }
+    if (invitation.invitationStatus === 'ACCEPTED') {
+      throw new BadRequestException('Invitation already accepted');
+    }
 
-  if (invitation.userId && invitation.userId !== userId) {
-    throw new ForbiddenException('This invitation is not for your account');
-  }
+    if (invitation.userId && invitation.userId !== userId) {
+      throw new ForbiddenException('This invitation is not for your account');
+    }
 
     // Mise à jour de l'invitation
     await this.prisma.sessionMember.update({

@@ -19,7 +19,9 @@ export class MailService {
     const forceTo = this.configService.get<string>('FORCE_EMAIL_TO');
     const recipient = env === 'dev' && forceTo ? forceTo : email;
 
-    const senderEmail = this.configService.get<string>('EMAIL_FROM') || 'no-reply@atwodigitalagency.com';
+    const senderEmail =
+      this.configService.get<string>('EMAIL_FROM') ||
+      'no-reply@atwodigitalagency.com';
 
     console.log(`📩 Envoi du mail via Brevo à : ${recipient}`);
 
@@ -49,7 +51,9 @@ export class MailService {
     const forceTo = this.configService.get<string>('FORCE_EMAIL_TO');
     const recipient = env === 'dev' && forceTo ? forceTo : to;
 
-    const senderEmail = this.configService.get<string>('EMAIL_FROM') || 'no-reply@atwodigitalagency.com';
+    const senderEmail =
+      this.configService.get<string>('EMAIL_FROM') ||
+      'no-reply@atwodigitalagency.com';
 
     console.log(`📩 Envoi du mail d'invitation via Brevo à : ${recipient}`);
 

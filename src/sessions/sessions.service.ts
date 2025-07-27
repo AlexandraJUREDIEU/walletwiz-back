@@ -16,7 +16,7 @@ export class SessionsService {
             userId: userId,
             role: 'OWNER',
             invitationStatus: 'ACCEPTED',
-            invitedEmail: email, 
+            invitedEmail: email,
           },
         },
       },
@@ -24,7 +24,7 @@ export class SessionsService {
   }
 
   async findAllByUser(userId: string) {
-      // Retourne uniquement les sessions dont l'utilisateur est propriétaire
+    // Retourne uniquement les sessions dont l'utilisateur est propriétaire
     return this.prisma.session.findMany({
       where: {
         ownerId: userId,

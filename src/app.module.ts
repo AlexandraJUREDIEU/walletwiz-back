@@ -9,7 +9,14 @@ import { SessionsModule } from './sessions/sessions.module';
 import { SessionMembersModule } from './session-members/session-members.module';
 
 @Module({
-  imports: [PrismaModule, UsersModule, AuthModule, MailModule, SessionsModule, SessionMembersModule],
+  imports: [
+    PrismaModule,
+    UsersModule,
+    AuthModule,
+    MailModule,
+    SessionsModule,
+    SessionMembersModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { MailService } from '../mail/mail.service';
 import * as bcrypt from 'bcrypt';
@@ -19,7 +24,9 @@ export class AuthService {
 
   async register(dto: RegisterDto) {
     const hashedPassword = await bcrypt.hash(dto.password, 10);
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString(); // Code 6 chiffres
+    const verificationCode = Math.floor(
+      100000 + Math.random() * 900000,
+    ).toString(); // Code 6 chiffres
     const verificationCodeExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     const user = await this.usersService.create({
@@ -49,11 +56,11 @@ export class AuthService {
 
     if (
       user.verificationCode !== dto.code ||
-     !user.verificationCodeExpiresAt ||
+      !user.verificationCodeExpiresAt ||
       user.verificationCodeExpiresAt < new Date()
     ) {
       throw new UnauthorizedException('Code invalide ou expiré');
-  }
+    }
 
     // Mise à jour du user : vérifié + suppression du code
     await this.usersService.update(user.id, {
@@ -62,11 +69,9 @@ export class AuthService {
       verificationCodeExpiresAt: null,
     });
     // 🔹 Création de la session par défaut
-    await this.sessionsService.create(
-      user.id,
-      user.email,
-      { name: 'WalletWiz - Personnel' }
-    );
+    await this.sessionsService.create(user.id, user.email, {
+      name: 'WalletWiz - Personnel',
+    });
 
     const payload = { sub: user.id, email: user.email };
     const token = await this.jwtService.signAsync(payload);
@@ -76,8 +81,8 @@ export class AuthService {
       accessToken: token,
       user: {
         id: user.id,
-        email: user.email
-      },   
+        email: user.email,
+      },
     };
   }
 
@@ -105,9 +110,9 @@ export class AuthService {
       accessToken,
       user: {
         id: user.id,
-        email: user.email
+        email: user.email,
       },
-      sessions: sessions.map(session => ({
+      sessions: sessions.map((session) => ({
         id: session.id,
         name: session.name,
         ownerId: session.ownerId,
