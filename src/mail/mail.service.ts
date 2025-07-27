@@ -38,10 +38,12 @@ export class MailService {
     to,
     invitedBy,
     link,
+    declinedLink,
   }: {
     to: string;
     invitedBy: string;
     link: string;
+    declinedLink?: string;
   }) {
     const env = this.configService.get<string>('NODE_ENV');
     const forceTo = this.configService.get<string>('FORCE_EMAIL_TO');
@@ -59,6 +61,7 @@ export class MailService {
       params: {
         invitedBy,
         link,
+        declinedLink,
       },
     });
   }
