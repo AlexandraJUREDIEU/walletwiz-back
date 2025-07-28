@@ -36,6 +36,7 @@ export class SessionsService {
       },
       include: {
         members: true, // optionnel : pour afficher les membres dans la réponse
+        owner: true, // optionnel : pour afficher le propriétaire de la session
       },
     });
   }
