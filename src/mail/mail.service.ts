@@ -23,13 +23,11 @@ export class MailService {
       this.configService.get<string>('EMAIL_FROM') ||
       'no-reply@atwodigitalagency.com';
 
-    console.log(`📩 Envoi du mail via Brevo à : ${recipient}`);
-
     await this.brevoApi.sendTransacEmail({
       to: [{ email: recipient }],
       sender: { name: 'WalletWiz', email: senderEmail },
       subject: 'Votre code WalletWiz',
-      templateId: 6, // ⬅️ Remplace par ton vrai ID de template Brevo
+      templateId: 6,
       params: {
         code,
       },
@@ -55,17 +53,37 @@ export class MailService {
       this.configService.get<string>('EMAIL_FROM') ||
       'no-reply@atwodigitalagency.com';
 
-    console.log(`📩 Envoi du mail d'invitation via Brevo à : ${recipient}`);
-
     await this.brevoApi.sendTransacEmail({
       to: [{ email: recipient }],
       sender: { name: 'WalletWiz', email: senderEmail },
       subject: 'Invitation à rejoindre une session',
-      templateId: 7, // ⬅️ Remplace par ton vrai ID de template Brevo
+      templateId: 7,
       params: {
         invitedBy,
         link,
         declinedLink,
+      },
+    });
+  }
+
+  async sendResetPasswordEmail(email: string, link: string) {
+    const env = this.configService.get<string>('NODE_ENV');
+    const forceTo = this.configService.get<string>('FORCE_EMAIL_TO');
+    const recipient = env === 'dev' && forceTo ? forceTo : email;
+
+    const senderEmail =
+      this.configService.get<string>('EMAIL_FROM') ||
+      'no-reply@atwodigitalagency.com';
+
+    console.log(`📩 Envoi du mail de réinitialisation à : ${recipient}`);
+
+    await this.brevoApi.sendTransacEmail({
+      to: [{ email: recipient }],
+      sender: { name: 'WalletWiz', email: senderEmail },
+      subject: 'Réinitialisation de votre mot de passe',
+      templateId: 8,
+      params: {
+        link,
       },
     });
   }

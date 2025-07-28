@@ -36,6 +36,8 @@ model User {
   emailVerified               Boolean   @default(false)
   verificationCode            String?
   verificationCodeExpiresAt   DateTime?
+  resetToken                  String?   @unique
+  resetTokenExpiresAt         DateTime?
   createdAt                   DateTime  @default(now())
 
   // Relations

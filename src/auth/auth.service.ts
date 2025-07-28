@@ -120,4 +120,30 @@ export class AuthService {
       })),
     };
   }
+
+  async forgotPassword(email: string) {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      throw new NotFoundException('Utilisateur non trouvé');
+    }
+
+    const resetToken = Math.random().toString(36).substring(2, 15);
+    const resetTokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    await this.usersService.update(user.id, {
+      resetToken,
+      resetTokenExpiresAt,
+    });
+
+    const resetLink =
+      process.env.NODE_ENV === 'production'
+        ? `https://wallet-wiz.alexandrajuredieu.fr/reset-password?token=${resetToken}`
+        : `http://localhost:5173/reset-password?token=${resetToken}`;
+
+    await this.mailService.sendResetPasswordEmail(user.email, resetLink);
+
+    return {
+      message: 'Un email de réinitialisation a été envoyé.',
+    };
+  }
 }
