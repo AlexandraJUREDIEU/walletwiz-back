@@ -20,6 +20,13 @@ export class UsersService {
     });
   }
 
+  // 🔹 Trouver un utilisateur par resetToken
+  async findByResetToken(token: string) {
+    return this.prisma.user.findFirst({
+      where: { resetToken: token },
+    });
+  }
+
   // 🔹 Trouver un utilisateur par ID
   async findById(id: string) {
     return this.prisma.user.findUnique({

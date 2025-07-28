@@ -146,4 +146,29 @@ export class AuthService {
       message: 'Un email de réinitialisation a été envoyé.',
     };
   }
+
+  async resetPassword(token: string, newPassword: string) {
+    if (!token || !newPassword) {
+      throw new BadRequestException('Token et nouveau mot de passe requis');
+    }
+
+    const user = await this.usersService.findByResetToken(token);
+    if (
+      !user ||
+      !user.resetTokenExpiresAt ||
+      user.resetTokenExpiresAt < new Date()
+    ) {
+      throw new UnauthorizedException('Token invalide ou expiré');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await this.usersService.update(user.id, {
+      password: hashedPassword,
+      resetToken: null,
+      resetTokenExpiresAt: null,
+    });
+
+    return { message: 'Mot de passe réinitialisé avec succès.' };
+  }
 }
