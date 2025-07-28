@@ -23,11 +23,19 @@ export class SessionsService {
     });
   }
 
-  async findAllByUser(userId: string) {
-    // Retourne uniquement les sessions dont l'utilisateur est propriétaire
+   async findAllByUser(userId: string) {
+    // Retourne toutes les sessions où l'utilisateur est membre (invitation ACCEPTED)
     return this.prisma.session.findMany({
       where: {
-        ownerId: userId,
+        members: {
+          some: {
+            userId: userId,
+            invitationStatus: 'ACCEPTED',
+          },
+        },
+      },
+      include: {
+        members: true, // optionnel : pour afficher les membres dans la réponse
       },
     });
   }
