@@ -112,27 +112,31 @@ model MonthlyIncome {
   day           Int         // entre 1 et 31
   createdAt     DateTime    @default(now())
   bankAccount   BankAccount @relation(fields: [bankAccountId], references: [id])
+  budgetIncomes BudgetIncome[]
 }
 
 model MonthlyCharge {
-  id            String      @id @default(uuid())
-  bankAccountId String
-  label         String
-  amount        Float
-  day           Int         // entre 1 et 31
-  createdAt     DateTime    @default(now())
-  bankAccount   BankAccount @relation(fields: [bankAccountId], references: [id])
+  id              String      @id @default(uuid())
+  bankAccountId   String
+  label           String
+  amount          Float
+  day             Int         // entre 1 et 31
+  createdAt       DateTime    @default(now())
+  bankAccount     BankAccount @relation(fields: [bankAccountId], references: [id])
+  budgetCharges   BudgetCharge[]
 }
 
 model Transaction {
   id            String          @id @default(uuid())
   bankAccountId String
+  budgetId      String
   amount        Float           // positif = entrée, négatif = sortie
   type          TypeTransaction @default(EXPENSE)
   item          ItemTransaction @default(VITAL)
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @default(now())
   bankAccount   BankAccount     @relation(fields: [bankAccountId], references: [id])
+  budget        Budget          @relation(fields: [budgetId], references: [id])
 }
 
 model Budget {
