@@ -25,6 +25,18 @@ enum InvitationStatus {
   DECLINED
 }
 
+enum TypeTransaction {
+  INCOME
+  EXPENSE
+}
+
+enum ItemTransaction {
+  VITAL
+  HOBBIES
+  VEHICLE
+  SAVING
+}
+
 model User {
   id                          String    @id @default(uuid())
   email                       String    @unique
@@ -56,25 +68,111 @@ model Session {
 }
 
 model SessionMember {
-  id               String           @id @default(uuid())
-  sessionId        String
-  userId           String?
-  role             MemberRole       @default(ADULT)
-  invitationStatus InvitationStatus @default(PENDING)
-  invitedEmail     String         
-  inviteToken      String?          @unique
-  invitedAt        DateTime         @default(now())
-  acceptedAt       DateTime?
-  session          Session          @relation(fields: [sessionId], references: [id])
-  user             User?            @relation(fields: [userId], references: [id])
+  id                   String           @id @default(uuid())
+  sessionId            String
+  userId               String?
+  role                 MemberRole       @default(ADULT)
+  invitationStatus     InvitationStatus @default(PENDING)
+  invitedEmail         String         
+  inviteToken          String?          @unique
+  invitedAt            DateTime         @default(now())
+  acceptedAt           DateTime?
+  session              Session          @relation(fields: [sessionId], references: [id])
+  user                 User?            @relation(fields: [userId], references: [id])
+  bankAccountMembers   BankAccountMember[]
   @@unique([sessionId, userId])
 }
 
+model BankAccount {
+  id              String   @id @default(uuid())
+  name            String
+  bankName        String
+  members         BankAccountMember[]
+  transactions    Transaction[]
+  incomes         MonthlyIncome[]
+  expenses        MonthlyCharge[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now())
+}
+
+model BankAccountMember {
+  id              String         @id @default(uuid())
+  bankAccountId   String
+  sessionMemberId String
+  bankAccount     BankAccount    @relation(fields: [bankAccountId], references: [id])
+  sessionMember   SessionMember  @relation(fields: [sessionMemberId], references: [id])
+  @@unique([bankAccountId, sessionMemberId])
+}
+
+model MonthlyIncome {
+  id            String      @id @default(uuid())
+  bankAccountId String
+  label         String
+  amount        Float
+  day           Int         // entre 1 et 31
+  createdAt     DateTime    @default(now())
+  bankAccount   BankAccount @relation(fields: [bankAccountId], references: [id])
+}
+
+model MonthlyCharge {
+  id            String      @id @default(uuid())
+  bankAccountId String
+  label         String
+  amount        Float
+  day           Int         // entre 1 et 31
+  createdAt     DateTime    @default(now())
+  bankAccount   BankAccount @relation(fields: [bankAccountId], references: [id])
+}
+
+model Transaction {
+  id            String          @id @default(uuid())
+  bankAccountId String
+  amount        Float           // positif = entrée, négatif = sortie
+  type          TypeTransaction @default(EXPENSE)
+  item          ItemTransaction @default(VITAL)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @default(now())
+  bankAccount   BankAccount     @relation(fields: [bankAccountId], references: [id])
+}
+
 model Budget {
-  id         String   @id @default(uuid())
-  sessionId  String
-  month      String   // format YYYY-MM, ex : "2025-08"
-  createdAt  DateTime @default(now())
-  session    Session  @relation(fields: [sessionId], references: [id])
+  id            String   @id @default(uuid())
+  sessionId     String
+  month         String   // format YYYY-MM, ex : "2025-08"
+  createdAt     DateTime @default(now())
+  session       Session  @relation(fields: [sessionId], references: [id])
+  allocations   BudgetAllocation[]
+  incomes       BudgetIncome[]
+  expenses      BudgetCharge[]
+  transactions  Transaction[]
   @@unique([sessionId, month])
+}
+
+model BudgetAllocation {
+  id         String         @id @default(uuid())
+  budgetId   String
+  item       ItemTransaction
+  percent    Float          // ex: 50.0 pour 50%
+  budget     Budget         @relation(fields: [budgetId], references: [id])
+  @@unique([budgetId, item])
+}
+
+model BudgetIncome {
+  id              String        @id @default(uuid())
+  budgetId        String
+  monthlyIncomeId String
+  amount          Float         // montant utilisé dans ce budget
+  budget          Budget        @relation(fields: [budgetId], references: [id])
+  monthlyIncome   MonthlyIncome @relation(fields: [monthlyIncomeId], references: [id])
+  @@unique([budgetId, monthlyIncomeId])
+}
+
+model BudgetCharge {
+  id              String        @id @default(uuid())
+  budgetId        String
+  monthlyChargeId String
+  amount          Float         // montant utilisé dans ce budget
+  budget          Budget        @relation(fields: [budgetId], references: [id])
+  monthlyCharge   MonthlyCharge @relation(fields: [monthlyChargeId], references: [id])
+  @@unique([budgetId, monthlyChargeId])
 }
