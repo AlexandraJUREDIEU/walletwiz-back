@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { SessionMembersModule } from './session-members/session-members.module';
+import { BankAccountModule } from './bank-account/bank-account.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { SessionMembersModule } from './session-members/session-members.module';
     MailModule,
     SessionsModule,
     SessionMembersModule,
+    BankAccountModule,
   ],
   controllers: [AppController],
   providers: [AppService],
