@@ -12,3 +12,28 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
+
+/// Représente un utilisateur inscrit dans WalletWiz.
+/// Peut créer des sessions ou être invité à en rejoindre.
+/// Sert de base à l'authentification et aux relations avec les membres.
+model Users {
+  
+  id                        String @id @default(cuid())                     /// ID unique de l'utilisateur (CUID).
+  email                     String @unique                                  /// Adresse email de connexion (unique).
+  password                  String                                          /// Mot de passe hashé.
+  firstName                 String?                                         /// Prénom de l'utilisateur (optionnel).
+  lastName                  String?                                         /// Nom de l'utilisateur (optionnel).
+  status                    String?                                         /// Statut de compte (optionnel - ex : actif, désactivé).
+  avatarUrl                 String?                                         /// URL de l’avatar utilisateur (optionnel).
+  emailVerified             Boolean @default(false)                         /// Booléen indiquant si l’email a été vérifié.
+  verificationCode          String?                                         /// Code de vérification envoyé par email (optionnel).
+  verificationExpiresAt     DateTime?                                       /// Date d’expiration du code de vérification.
+  resetToken                String? @unique                                 /// Token de réinitialisation du mot de passe (unique, optionnel).
+  resetExpiresAt            DateTime?                                       /// Date d’expiration du token de réinitialisation.
+  createdAt                 DateTime @default(now())                        /// Date de création du compte.
+  updatedAt                 DateTime @updatedAt                             /// Date de dernière mise à jour du compte.
+
+  /// Relations
+                                
+}
