@@ -90,7 +90,7 @@ model Members {
   updatedAt             DateTime          @updatedAt                              /// Date de dernière mise à jour.
 
   /// Relations
-  session               Sessions           @relation(fields: [sessionId], references: [id])    /// Session à laquelle le membre est rattaché.
+  session               Sessions           @relation(fields: [sessionId], references: [id], onDelete : Cascade)   /// Session à laquelle le membre est rattaché, supprime le membre si la session est supprimé.
   user                  Users?             @relation(fields: [userId], references: [id])       /// Utilisateur lié (si réel).
 
   @@unique([sessionId, userId])                                                               /// Un même user ne peut être que 1x dans une session.
