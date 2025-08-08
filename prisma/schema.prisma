@@ -35,5 +35,21 @@ model Users {
   updatedAt                 DateTime @updatedAt                             /// Date de dernière mise à jour du compte.
 
   /// Relations
-                                
+  sessionsOwned             Session[] @relation("UserOwnedSessions")        /// Sessions créées par cet utilisateur.                              
+}
+
+
+/// Représente une session de gestion partagée dans WalletWiz.
+/// Une session regroupe les comptes, revenus, dépenses, membres, etc.
+/// Chaque session est créée par un utilisateur (owner).
+model Session {
+
+  id           String    @id @default(cuid())                                                 /// ID unique de la session.
+  name         String?                                                                        /// Nom de la session (optionnel).
+  ownerId      String                                                                         /// ID de l’utilisateur créateur de la session.
+  createdAt    DateTime  @default(now())                                                      /// Date de création de la session.
+  updatedAt    DateTime  @updatedAt                                                           /// Date de dernière mise à jour.
+
+  /// Relations
+  owner        Users      @relation("UserOwnedSessions", fields: [ownerId], references: [id])  /// Propriétaire de la session.
 }
