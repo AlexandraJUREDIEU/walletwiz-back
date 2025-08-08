@@ -13,18 +13,33 @@ export class SessionsService {
 
   /// Crée une nouvelle session liée à l'utilisateur connecté
   async create(userId: string, dto: CreateSessionDto) {
-    return this.prisma.sessions.create({
-      data: {
-        ownerId: userId,
-        name: dto.name,
-      },
-      include: {
-        owner: {
-          select: {
-            email: true,
+    return this.prisma.$transaction(async (tx) => {
+      // Toutes les autres sessions deviennent non par défaut
+      await tx.sessions.updateMany({
+        where: {
+          ownerId: userId,
+          isDefault: true,
+        },
+        data: {
+          isDefault: false,
+        },
+      })
+
+      // Création de la nouvelle session qui devient la session par défaut
+      return tx.sessions.create({
+        data: {
+          ownerId: userId,
+          name: dto.name,
+          isDefault: true,
+        },
+        include: {
+          owner: {
+            select: {
+              email: true,
+            },
           },
         },
-      },
+      })
     })
   }
 
