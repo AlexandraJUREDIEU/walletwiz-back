@@ -12,7 +12,7 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   getProfile(@GetUser() user: any) {
-    return user;
+    return this.usersService.getMe(user.userId);
   }
 
   @Post()
