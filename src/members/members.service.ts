@@ -1,26 +1,75 @@
-import { Injectable } from '@nestjs/common';
-import { CreateMemberDto } from './dto/create-member.dto';
-import { UpdateMemberDto } from './dto/update-member.dto';
+import { Injectable, NotFoundException } from '@nestjs/common'
+import { PrismaService } from 'src/prisma/prisma.service'
+import { CreateMemberDto } from './dto/create-member.dto'
+import { UpdateMemberDto } from './dto/update-member.dto'
+import { randomUUID } from 'crypto'
 
 @Injectable()
 export class MembersService {
-  create(createMemberDto: CreateMemberDto) {
-    return 'This action adds a new member';
+  constructor(private prisma: PrismaService) {}
+
+  // Crée un nouveau membre pour une session
+  /// Si userId est fourni, le membre est lié à un utilisateur existant
+  /// Si invitedEmail est fourni, un email d'invitation est envoyé
+  /// Si name est fourni, un membre temporaire est créé sans utilisateur
+  async create(dto: CreateMemberDto) {
+    const data: any = {
+      sessionId: dto.sessionId,
+      role: dto.role || 'COLLABORATOR',
+    }
+
+    if (dto.userId) {
+      data.userId = dto.userId
+      data.invitationStatus = 'ACCEPTED'
+    } else if (dto.invitedEmail) {
+      data.invitedEmail = dto.invitedEmail
+      data.inviteToken = randomUUID()
+      data.invitedAt = new Date()
+    } else if (dto.name) {
+      data.name = dto.name
+      data.isPlaceholder = true
+    }
+
+    return this.prisma.members.create({ data })
   }
 
-  findAll() {
-    return `This action returns all members`;
+  async findAllBySession(sessionId: string) {
+    return this.prisma.members.findMany({
+      where: { sessionId },
+      include: {
+        user: {
+          select: { id: true, email: true, firstName: true, lastName: true },
+        },
+      },
+    })
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} member`;
+  /// Récupère un membre par son ID
+  async findOne(id: string) {
+    const member = await this.prisma.members.findUnique({
+      where: { id },
+      include: {
+        user: {
+          select: { id: true, email: true, firstName: true, lastName: true },
+        },
+      },
+    })
+    if (!member) throw new NotFoundException('Member not found')
+    return member
   }
 
-  update(id: number, updateMemberDto: UpdateMemberDto) {
-    return `This action updates a #${id} member`;
+  /// Met à jour un membre existant
+  async update(id: string, dto: UpdateMemberDto) {
+    return this.prisma.members.update({
+      where: { id },
+      data: dto,
+    })
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} member`;
+  /// Supprime un membre par son ID
+  async remove(id: string) {
+    return this.prisma.members.delete({
+      where: { id },
+    })
   }
 }
