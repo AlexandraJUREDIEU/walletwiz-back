@@ -1,34 +1,41 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { SessionsService } from './sessions.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth-guard';
+import { GetUser } from 'src/auth/get-user.decorator';
 
+@UseGuards(JwtAuthGuard)
 @Controller('sessions')
 export class SessionsController {
   constructor(private readonly sessionsService: SessionsService) {}
 
+  /// Crée une nouvelle session
   @Post()
-  create(@Body() createSessionDto: CreateSessionDto) {
-    return this.sessionsService.create(createSessionDto);
+  create(@GetUser() user: any, @Body() dto: CreateSessionDto) {
+    return this.sessionsService.create(user.userId, dto)
   }
 
+  /// Récupère toutes les sessions créées par l'utilisateur connecté
   @Get()
-  findAll() {
-    return this.sessionsService.findAll();
+  findAll(@GetUser() user: any) {
+    return this.sessionsService.findAll(user.userId)
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.sessionsService.findOne(+id);
-  }
-
+  /// Met à jour une session si elle appartient à l'utilisateur
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSessionDto: UpdateSessionDto) {
-    return this.sessionsService.update(+id, updateSessionDto);
+  update(
+    @GetUser() user: any,
+    @Param('id') id: string,
+    @Body() dto: UpdateSessionDto,
+  ) {
+    return this.sessionsService.update(user.userId, id, dto)
   }
 
+  /// Supprime une session si elle appartient à l'utilisateur
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.sessionsService.remove(+id);
+  remove(@GetUser() user: any, @Param('id') id: string) {
+    return this.sessionsService.remove(user.userId, id)
   }
 }
+
