@@ -25,6 +25,11 @@ export class MembersController {
     return this.membersService.findAllBySession(sessionId)
   }
 
+  @Get('invite/:token')
+  getByInviteToken(@Param('token') token: string) {
+    return this.membersService.findByInviteToken(token)
+  }
+  
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.membersService.findOne(id)

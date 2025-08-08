@@ -33,6 +33,23 @@ export class MembersService {
     return this.prisma.members.create({ data })
   }
 
+  async findByInviteToken(token: string) {
+    const member = await this.prisma.members.findUnique({
+      where: { inviteToken: token },
+      include: {
+        session: {
+          select: { id: true, name: true },
+        },
+      },
+    })
+
+    if (!member) {
+      throw new NotFoundException('Invitation invalide ou expirée')
+    }
+
+    return member
+  }
+
   async findAllBySession(sessionId: string) {
     return this.prisma.members.findMany({
       where: { sessionId },
