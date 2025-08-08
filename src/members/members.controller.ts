@@ -18,9 +18,10 @@ import { GetUser } from 'src/auth/get-user.decorator'
 export class MembersController {
   constructor(private readonly membersService: MembersService) {}
 
+  @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Body() dto: CreateMemberDto) {
-    return this.membersService.create(dto)
+  create(@GetUser() user: any, @Body() dto: CreateMemberDto) {
+    return this.membersService.create(user.userId, dto)
   }
 
   @Get('session/:sessionId')
@@ -47,6 +48,19 @@ export class MembersController {
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateMemberDto) {
     return this.membersService.update(id, dto)
+  }
+
+  // Invité décline via son lien
+  @Post('decline/:token')
+  declineInvite(@Param('token') token: string) {
+    return this.membersService.declineInvite(token)
+  }
+
+  // Owner révoque (supprime) une invitation pending (auth requis)
+  @UseGuards(JwtAuthGuard)
+  @Delete('invite/:id')
+  revokeInvite(@GetUser() user: any, @Param('id') memberId: string) {
+    return this.membersService.revokeInvite(memberId, user.userId)
   }
 
   @Delete(':id')

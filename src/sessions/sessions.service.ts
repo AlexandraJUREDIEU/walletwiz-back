@@ -51,7 +51,20 @@ export class SessionsService {
       include: {
         owner: {
           select: {
+            id: true,
             email: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        members: {
+          select: {
+            id: true,
+            userId: true,
+            invitedEmail: true,
+            name: true,
+            role: true,
+            invitationStatus: true,
           },
         },
       },
