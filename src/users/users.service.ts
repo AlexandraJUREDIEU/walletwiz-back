@@ -4,6 +4,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as bcrypt from 'bcrypt'
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { userPublicSelect } from './user.select';
 
 @Injectable()
 export class UsersService {
@@ -17,36 +18,30 @@ export class UsersService {
         ...dto,
         password: hashedPassword,
       },
+      select: userPublicSelect
     })
   }
 
   async getMe(userId: string) {
   const user = await this.prisma.users.findUnique({
     where: { id: userId },
-    select: {
-      id: true,
-      email: true,
-      firstName: true,
-      lastName: true,
-      avatarUrl: true,
-      emailVerified: true,
-      createdAt: true,
-      updatedAt: true,
-    },
+    select: userPublicSelect
   })
 
-  if (!user) throw new NotFoundException('Utilisateur non trouvé')
+  if (!user) throw new NotFoundException('❌ Utilisateur non trouvé')
 
   return user
 }
 
   async findAll() {
-    return this.prisma.users.findMany();
+    return this.prisma.users.findMany({
+      select: userPublicSelect
+    })
   }
 
   async findOne(id: string) {
-    const user = await this.prisma.users.findUnique({ where: { id } })
-    if (!user) throw new NotFoundException('User not found')
+    const user = await this.prisma.users.findUnique({ where: { id }, select: userPublicSelect })
+    if (!user) throw new NotFoundException('❌ User not found')
     return user
   }
 
@@ -56,41 +51,26 @@ export class UsersService {
       data: {
         ...dto,
       },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        avatarUrl: true,
-        emailVerified: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      select: userPublicSelect,
     })
   }
   
   async update(requestingUserId: string, targetUserId: string, dto: UpdateUserDto) {
     if (requestingUserId !== targetUserId) {
-      throw new ForbiddenException("Vous n'êtes pas autorisé à modifier ce profil.")
+      throw new ForbiddenException("❌ Vous n'êtes pas autorisé à modifier ce profil.")
     }
 
     return this.prisma.users.update({
       where: { id: targetUserId },
       data: { ...dto },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        avatarUrl: true,
-        emailVerified: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      select: userPublicSelect,
     })
   }
 
   async remove(id: string) {
-    return this.prisma.users.delete({ where: { id } });
+    const user = await this.prisma.users.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException('User not found');
+    await this.prisma.users.delete({ where: { id } });
+    return { message: `✅ Utilisateur (${user.email}) supprimé avec succès` };
   }
 }
