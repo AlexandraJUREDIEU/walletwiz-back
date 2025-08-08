@@ -18,6 +18,13 @@ export class SessionsService {
         ownerId: userId,
         name: dto.name,
       },
+      include: {
+        owner: {
+          select: {
+            email: true,
+          },
+        },
+      },
     })
   }
 
@@ -26,6 +33,13 @@ export class SessionsService {
     return this.prisma.sessions.findMany({
       where: { ownerId: userId },
       orderBy: { createdAt: 'desc' },
+      include: {
+        owner: {
+          select: {
+            email: true,
+          },
+        },
+      },
     })
   }
 
@@ -41,6 +55,13 @@ export class SessionsService {
     return this.prisma.sessions.update({
       where: { id: sessionId },
       data: dto,
+      include: {
+        owner: {
+          select: {
+            email: true,
+          },
+        },
+      },
     })
   }
 

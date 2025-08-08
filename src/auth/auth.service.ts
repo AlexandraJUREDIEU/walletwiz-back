@@ -29,6 +29,14 @@ export class AuthService {
       },
     })
 
+    await this.prisma.sessions.create({
+      data: {
+        ownerId: user.id,
+        name: 'My Wallet Session',
+        isDefault: true,
+      },
+    })
+
     const payload = { sub: user.id, email: user.email }
 
     return {
