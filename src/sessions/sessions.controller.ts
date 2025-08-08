@@ -32,6 +32,12 @@ export class SessionsController {
     return this.sessionsService.update(user.userId, id, dto)
   }
 
+  /// Définit une session comme par défaut si elle appartient à l'utilisateur
+  @Patch(':id/default')
+  setDefault(@GetUser() user: any, @Param('id') id: string) {
+    return this.sessionsService.setDefault(user.userId, id)
+  }
+
   /// Supprime une session si elle appartient à l'utilisateur
   @Delete(':id')
   remove(@GetUser() user: any, @Param('id') id: string) {

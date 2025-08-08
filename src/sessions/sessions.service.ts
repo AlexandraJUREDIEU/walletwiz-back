@@ -58,6 +58,31 @@ export class SessionsService {
     })
   }
 
+  /// Définit une session comme par défaut si elle appartient à l'utilisateur
+  /// Toutes les autres sessions de l'utilisateur deviennent non par défaut
+  async setDefault(userId: string, sessionId: string) {
+    // Vérifie que la session appartient bien à l'utilisateur
+    const session = await this.prisma.sessions.findUnique({
+      where: { id: sessionId },
+    })
+
+    if (!session) throw new NotFoundException('Session non trouvée')
+    if (session.ownerId !== userId) {
+      throw new ForbiddenException("Vous n'êtes pas autorisé à modifier cette session")
+    }
+
+    return this.prisma.$transaction([
+      this.prisma.sessions.updateMany({
+        where: { ownerId: userId },
+        data: { isDefault: false },
+      }),
+      this.prisma.sessions.update({
+        where: { id: sessionId },
+        data: { isDefault: true },
+      }),
+    ])
+  }
+
   /// Met à jour une session si elle appartient à l'utilisateur
   async update(userId: string, sessionId: string, dto: UpdateSessionDto) {
     const session = await this.prisma.sessions.findUnique({ where: { id: sessionId } })
