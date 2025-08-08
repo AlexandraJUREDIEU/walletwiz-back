@@ -37,9 +37,13 @@ export class UsersController {
     return this.usersService.updateMe(user.userId, dto)
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
-    return this.usersService.update(id, dto);
+  update(
+    @GetUser() user: any, 
+    @Param('id') id: string, 
+    @Body() dto: UpdateUserDto) {
+    return this.usersService.update(user.userId, id, dto);
   }
 
   @Delete(':id')

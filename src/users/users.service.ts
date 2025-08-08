@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -69,8 +69,25 @@ export class UsersService {
     })
   }
   
-  async update(id: string, dto: UpdateUserDto) {
-    return this.prisma.users.update({ where: { id }, data: dto });
+  async update(requestingUserId: string, targetUserId: string, dto: UpdateUserDto) {
+    if (requestingUserId !== targetUserId) {
+      throw new ForbiddenException("Vous n'êtes pas autorisé à modifier ce profil.")
+    }
+
+    return this.prisma.users.update({
+      where: { id: targetUserId },
+      data: { ...dto },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        avatarUrl: true,
+        emailVerified: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    })
   }
 
   async remove(id: string) {
