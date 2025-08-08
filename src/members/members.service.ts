@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaService } from 'src/prisma/prisma.service'
 import { CreateMemberDto } from './dto/create-member.dto'
 import { UpdateMemberDto } from './dto/update-member.dto'
@@ -73,6 +73,60 @@ export class MembersService {
     })
     if (!member) throw new NotFoundException('Member not found')
     return member
+  }
+
+  /// Accepte une invitation à rejoindre une session
+  /// Vérifie si l'invitation est valide et n'a pas déjà été acceptée.
+  async acceptInvite(token: string, userId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const invite = await tx.members.findUnique({ where: { inviteToken: token } })
+      if (!invite) throw new NotFoundException('Invitation invalide ou expirée')
+
+      // déjà acceptée ?
+      if (invite.invitationStatus === 'ACCEPTED') {
+        throw new BadRequestException('Cette invitation a déjà été acceptée')
+      }
+
+      // user déjà membre de la même session ?
+      const existing = await tx.members.findFirst({
+        where: { sessionId: invite.sessionId, userId },
+      })
+
+      if (existing) {
+        // 1) on met à jour le membre existant (au cas où il n’aurait pas d’acceptedAt)
+        const updatedExisting = await tx.members.update({
+          where: { id: existing.id },
+          data: {
+            invitationStatus: 'ACCEPTED',
+            acceptedAt: existing.acceptedAt ?? new Date(),
+            isPlaceholder: false,
+          },
+          include: {
+            session: { select: { id: true, name: true } },
+            user: { select: { id: true, email: true, firstName: true, lastName: true } },
+          },
+        })
+        // 2) on supprime la ligne d’invitation
+        await tx.members.delete({ where: { id: invite.id } })
+        return updatedExisting
+      }
+
+      // chemin normal : rattacher le user à la ligne d’invitation
+      return tx.members.update({
+        where: { id: invite.id },
+        data: {
+          userId,
+          invitationStatus: 'ACCEPTED',
+          acceptedAt: new Date(),
+          isPlaceholder: false,
+          inviteToken: null,
+        },
+        include: {
+          session: { select: { id: true, name: true } },
+          user: { select: { id: true, email: true, firstName: true, lastName: true } },
+        },
+      })
+    })
   }
 
   /// Met à jour un membre existant

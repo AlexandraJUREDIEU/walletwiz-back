@@ -6,10 +6,13 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common'
 import { MembersService } from './members.service'
 import { CreateMemberDto } from './dto/create-member.dto'
 import { UpdateMemberDto } from './dto/update-member.dto'
+import { JwtAuthGuard } from 'src/auth/jwt-auth-guard'
+import { GetUser } from 'src/auth/get-user.decorator'
 
 @Controller('members')
 export class MembersController {
@@ -29,7 +32,13 @@ export class MembersController {
   getByInviteToken(@Param('token') token: string) {
     return this.membersService.findByInviteToken(token)
   }
-  
+
+  @UseGuards(JwtAuthGuard)
+  @Post('accept/:token')
+  acceptInvite(@GetUser() user: any, @Param('token') token: string) {
+    return this.membersService.acceptInvite(token, user.userId)
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.membersService.findOne(id)
