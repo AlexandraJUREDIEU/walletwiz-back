@@ -13,6 +13,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/// Rôles possibles d’un membre dans une session.
+enum MemberRole {
+  OWNER        /// Propriétaire (si tu veux le représenter aussi comme Member)
+  COLLABORATOR /// Peut éditer (collaborateur)
+  VIEWER       /// Lecture seule (lecteur)
+}
+
+/// Statut de l’invitation (si utilisée).
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
 
 /// Représente un utilisateur inscrit dans WalletWiz.
 /// Peut créer des sessions ou être invité à en rejoindre.
@@ -35,7 +48,8 @@ model Users {
   updatedAt                 DateTime @updatedAt                             /// Date de dernière mise à jour du compte.
 
   /// Relations
-  sessionsOwned             Sessions[] @relation("UserOwnedSessions")        /// Sessions créées par cet utilisateur.                              
+  sessionsOwned             Sessions[] @relation("UserOwnedSessions")       /// Sessions créées par cet utilisateur.
+  membres                   Members[]                                       /// Liste des rattachements en tant que membre de sessions.
 }
 
 
@@ -52,5 +66,34 @@ model Sessions {
   updatedAt    DateTime  @updatedAt                                                           /// Date de dernière mise à jour.
 
   /// Relations
-  owner        Users      @relation("UserOwnedSessions", fields: [ownerId], references: [id])  /// Propriétaire de la session.
+  owner        Users      @relation("UserOwnedSessions", fields: [ownerId], references: [id])   /// Propriétaire de la session.
+  members      Members[]                                                                        /// Membres rattachés à cette session.
+}
+
+
+/// Représente un membre rattaché à une session WalletWiz.
+/// Peut être un utilisateur réel (userId) ou un membre fictif (sans user, avec un nom libre).
+/// Gère aussi la mécanique d’invitation via inviteToken (lien copiable).
+model Members {
+  id                    String           @id @default(cuid())                     /// ID unique du membre de session (CUID).
+  sessionId             String                                                    /// ID de la session concernée.
+  userId                String?                                                   /// ID de l'utilisateur WalletWiz (optionnel si membre fictif).
+  name                  String?                                                   /// Nom affiché si membre fictif ou alias (optionnel).
+  role                  MemberRole        @default(COLLABORATOR)                  /// Rôle dans la session (collaborateur, lecteur…).
+  isPlaceholder         Boolean           @default(false)                         /// True si membre fictif (non lié à un user).
+  invitationStatus      InvitationStatus  @default(PENDING)                       /// Statut de l’invitation si utilisée.
+  invitedEmail          String?                                                   /// Email d’invitation (optionnel, si utilisé).
+  inviteToken           String?           @unique                                 /// Jeton d’invitation (lien copiable), optionnel.
+  invitedAt             DateTime?                                                 /// Date d’envoi de l’invitation (optionnelle).
+  acceptedAt            DateTime?                                                 /// Date d’acceptation (optionnelle).
+  createdAt             DateTime          @default(now())                         /// Date de création du rattachement.
+  updatedAt             DateTime          @updatedAt                              /// Date de dernière mise à jour.
+
+  /// Relations
+  session               Sessions           @relation(fields: [sessionId], references: [id])    /// Session à laquelle le membre est rattaché.
+  user                  Users?             @relation(fields: [userId], references: [id])       /// Utilisateur lié (si réel).
+
+  @@unique([sessionId, userId])                                                               /// Un même user ne peut être que 1x dans une session.
+  @@index([sessionId])
+  @@index([userId])
 }
