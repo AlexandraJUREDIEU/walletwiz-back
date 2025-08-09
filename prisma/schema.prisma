@@ -66,8 +66,9 @@ model Sessions {
   updatedAt    DateTime  @updatedAt                                                           /// Date de dernière mise à jour.
 
   /// Relations
-  owner        Users      @relation("UserOwnedSessions", fields: [ownerId], references: [id])   /// Propriétaire de la session.
-  members      Members[]                                                                        /// Membres rattachés à cette session.
+  owner           Users      @relation("UserOwnedSessions", fields: [ownerId], references: [id])   /// Propriétaire de la session.
+  members         Members[]                                                                        /// Membres rattachés à cette session.
+  bankAccounts    BankAccounts[]                                                                   /// Comptes bancaires rattachés à cette session.
 }
 
 
@@ -91,9 +92,45 @@ model Members {
 
   /// Relations
   session               Sessions           @relation(fields: [sessionId], references: [id], onDelete : Cascade)   /// Session à laquelle le membre est rattaché, supprime le membre si la session est supprimé.
-  user                  Users?             @relation(fields: [userId], references: [id])       /// Utilisateur lié (si réel).
+  user                  Users?             @relation(fields: [userId], references: [id])                          /// Utilisateur lié (si réel).
+  bankAccounts          BankAccountMembers[]                                                                      /// Comptes joints auxquels ce membre est rattaché.
 
   @@unique([sessionId, userId])                                                               /// Un même user ne peut être que 1x dans une session.
   @@index([sessionId])
   @@index([userId])
+}
+
+/// Représente un compte bancaire rattaché à une session WalletWiz.
+/// Peut être partagé (compte joint) entre plusieurs membres via la table pivot BankAccountMember.
+/// Sert de support aux flux financiers (revenus/dépenses) — non gérés pour l’instant.
+model BankAccounts {
+
+  id              String             @id @default(cuid())                       /// ID unique du compte (CUID).
+  label           String                                                        /// Libellé du compte (ex: "Compte courant").
+  bankName        String                                                        /// Nom de la banque (ex: "BNP", "Société Générale").
+  sessionId       String                                                        /// ID de la session propriétaire du compte.
+  initialBalance  Decimal            @db.Decimal(18, 2) @default(0)             /// Solde initial du compte (précis, décimal).
+  isArchived      Boolean            @default(false)                            /// Indique si le compte est archivé (inactif).
+  createdAt       DateTime           @default(now())                            /// Date de création du compte.
+  updatedAt       DateTime           @updatedAt                                 /// Date de dernière mise à jour.
+
+  /// Relations
+  session         Sessions            @relation(fields: [sessionId], references: [id])   /// Session à laquelle le compte appartient.
+  members         BankAccountMembers[]                                                   /// Membres associés (compte joint).
+
+  @@index([sessionId])
+}
+
+/// Table pivot entre BankAccount et Member pour gérer les comptes joints.
+/// Un compte peut avoir plusieurs membres, et un membre peut être rattaché à plusieurs comptes.
+model BankAccountMembers {
+  bankAccountId   String                                                     /// ID du compte.
+  memberId        String                                                     /// ID du membre.
+  createdAt       DateTime            @default(now())                        /// Date de rattachement au compte.
+
+  bankAccount     BankAccounts         @relation(fields: [bankAccountId], references: [id], onDelete: Cascade) /// Supprime le lien si le compte est supprimé.
+  member          Members              @relation(fields: [memberId], references: [id], onDelete: Cascade)      /// Supprime le lien si le membre est supprimé.
+
+  @@id([bankAccountId, memberId])                                                                             /// Clé composite unique.
+  @@index([memberId])
 }
