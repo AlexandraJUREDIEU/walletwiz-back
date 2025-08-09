@@ -1,34 +1,70 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { BanksService } from './banks.service';
-import { CreateBankDto } from './dto/create-bank.dto';
-import { UpdateBankDto } from './dto/update-bank.dto';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common'
+import { BanksService } from './banks.service'
+import { CreateBankDto } from './dto/create-bank.dto'
+import { UpdateBankDto } from './dto/update-bank.dto'
+import { AddAccountMemberDto } from './dto/add-account-member.dto'
+import { JwtAuthGuard } from 'src/auth/jwt-auth-guard'
+import { GetUser } from 'src/auth/get-user.decorator'
 
-@Controller('banks')
+@UseGuards(JwtAuthGuard)
+@Controller('bank-accounts')
 export class BanksController {
-  constructor(private readonly banksService: BanksService) {}
+  constructor(private readonly bankAccountsService: BanksService) {}
 
+  // Lister les comptes d’une session (OWNER/COLLABORATOR/VIEWER appartenant à la session)
+  @Get('session/:sessionId')
+  findAllBySession(@GetUser() user: any, @Param('sessionId') sessionId: string) {
+    return this.bankAccountsService.findAllBySession(user.userId, sessionId)
+  }
+
+  // Créer un compte (OWNER/COLLABORATOR)
   @Post()
-  create(@Body() createBankDto: CreateBankDto) {
-    return this.banksService.create(createBankDto);
+  create(@GetUser() user: any, @Body() dto: CreateBankDto) {
+    return this.bankAccountsService.create(user.userId, dto)
   }
 
-  @Get()
-  findAll() {
-    return this.banksService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.banksService.findOne(+id);
-  }
-
+  // Mettre à jour un compte (OWNER/COLLABORATOR)
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateBankDto: UpdateBankDto) {
-    return this.banksService.update(+id, updateBankDto);
+  update(
+    @GetUser() user: any,
+    @Param('id') id: string,
+    @Body() dto: UpdateBankDto,
+  ) {
+    return this.bankAccountsService.update(user.userId, id, dto)
   }
 
+  // Supprimer un compte (OWNER/COLLABORATOR)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.banksService.remove(+id);
+  remove(@GetUser() user: any, @Param('id') id: string) {
+    return this.bankAccountsService.remove(user.userId, id)
+  }
+
+  // Ajouter un ou plusieurs membres au compte (OWNER/COLLABORATOR)
+  @Post(':id/members')
+  addMembers(
+    @GetUser() user: any,
+    @Param('id') id: string,
+    @Body() dto: AddAccountMemberDto,
+  ) {
+    return this.bankAccountsService.addMembers(user.userId, id, dto)
+  }
+
+  // Retirer un membre du compte (OWNER/COLLABORATOR)
+  @Delete(':id/members/:memberId')
+  removeMember(
+    @GetUser() user: any,
+    @Param('id') id: string,
+    @Param('memberId') memberId: string,
+  ) {
+    return this.bankAccountsService.removeMember(user.userId, id, memberId)
   }
 }
