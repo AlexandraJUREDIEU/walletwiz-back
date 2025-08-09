@@ -24,11 +24,14 @@ export class MembersController {
     return this.membersService.create(user.userId, dto)
   }
 
+  // 🔒 On protège aussi l’accès à la liste des membres d’une session
+  @UseGuards(JwtAuthGuard)
   @Get('session/:sessionId')
-  findAllBySession(@Param('sessionId') sessionId: string) {
-    return this.membersService.findAllBySession(sessionId)
+  findAllBySession(@GetUser() user: any, @Param('sessionId') sessionId: string) {
+    return this.membersService.findAllBySession(user.userId, sessionId)
   }
 
+  // Lié à un lien public => laissé public (mais on n’expose plus le token dans la réponse)
   @Get('invite/:token')
   getByInviteToken(@Param('token') token: string) {
     return this.membersService.findByInviteToken(token)
@@ -40,31 +43,46 @@ export class MembersController {
     return this.membersService.acceptInvite(token, user.userId)
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.membersService.findOne(id)
+  findOne(@GetUser() user: any, @Param('id') id: string) {
+    return this.membersService.findOne(user.userId, id)
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateMemberDto) {
-    return this.membersService.update(id, dto)
+  update(@GetUser() user: any, @Param('id') id: string, @Body() dto: UpdateMemberDto) {
+    return this.membersService.update(user.userId, id, dto)
   }
 
-  // Invité décline via son lien
+  // ✅ Endpoint dédié: changer de rôle (OWNER + COLLABORATOR autorisés)
+  // - Seul OWNER peut nommer/déposer OWNER
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/role')
+  changeRole(
+    @GetUser() user: any,
+    @Param('id') id: string,
+    @Body() body: { role: 'OWNER' | 'COLLABORATOR' | 'VIEWER' },
+  ) {
+    return this.membersService.changeRole(user.userId, id, body.role)
+  }
+
+  // Invité décline via lien public
   @Post('decline/:token')
   declineInvite(@Param('token') token: string) {
     return this.membersService.declineInvite(token)
   }
 
-  // Owner révoque (supprime) une invitation pending (auth requis)
+  // Owner (ou manager) révoque une invitation
   @UseGuards(JwtAuthGuard)
   @Delete('invite/:id')
   revokeInvite(@GetUser() user: any, @Param('id') memberId: string) {
     return this.membersService.revokeInvite(memberId, user.userId)
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.membersService.remove(id)
+  remove(@GetUser() user: any, @Param('id') id: string) {
+    return this.membersService.remove(user.userId, id)
   }
 }
