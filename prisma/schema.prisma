@@ -68,7 +68,8 @@ model Sessions {
   /// Relations
   owner           Users      @relation("UserOwnedSessions", fields: [ownerId], references: [id])   /// Propriétaire de la session.
   members         Members[]                                                                        /// Membres rattachés à cette session.
-  bankAccounts    BankAccounts[]                                                                   /// Comptes bancaires rattachés à cette session.
+  bankAccounts    BankAccounts[]        
+  incomes         Incomes[]                                                                        /// Revenus rattachés à cette session.                                                           /// Comptes bancaires rattachés à cette session.
 }
 
 
@@ -94,6 +95,8 @@ model Members {
   session               Sessions           @relation(fields: [sessionId], references: [id], onDelete : Cascade)   /// Session à laquelle le membre est rattaché, supprime le membre si la session est supprimé.
   user                  Users?             @relation(fields: [userId], references: [id])                          /// Utilisateur lié (si réel).
   bankAccounts          BankAccountMembers[]                                                                      /// Comptes joints auxquels ce membre est rattaché.
+  incomes               Incomes[]                                                                                 /// Revenus perçus par ce membre.
+
 
   @@unique([sessionId, userId])                                                               /// Un même user ne peut être que 1x dans une session.
   @@index([sessionId])
@@ -117,6 +120,8 @@ model BankAccounts {
   /// Relations
   session         Sessions            @relation(fields: [sessionId], references: [id])   /// Session à laquelle le compte appartient.
   members         BankAccountMembers[]                                                   /// Membres associés (compte joint).
+  incomes         Incomes[]                                                              /// Revenus versés sur ce compte.
+
 
   @@index([sessionId])
 }
@@ -133,4 +138,28 @@ model BankAccountMembers {
 
   @@id([bankAccountId, memberId])                                                                             /// Clé composite unique.
   @@index([memberId])
+}
+
+/// Représente un revenu rattaché à une session.
+/// Le revenu appartient à un membre et est versé sur un compte bancaire.
+model Incomes {
+
+  id            String      @id @default(cuid())                  /// ID unique du revenu (CUID).
+  label         String                                           /// Intitulé du revenu (ex: "Salaire").
+  amount        Decimal     @db.Decimal(18, 2)                    /// Montant du revenu (décimal précis).
+  day           Int                                              /// Jour du mois prévu (1–31).
+  sessionId     String                                           /// ID de la session.
+  memberId      String                                           /// ID du membre bénéficiaire.
+  bankAccountId String                                           /// ID du compte bancaire de versement.
+  createdAt     DateTime    @default(now())                      /// Date de création.
+  updatedAt     DateTime    @updatedAt                           /// Date de dernière mise à jour.
+
+  /// Relations
+  session       Sessions     @relation(fields: [sessionId], references: [id])     /// Session liée.
+  member        Members      @relation(fields: [memberId], references: [id])      /// Membre concerné.
+  bankAccount   BankAccounts @relation(fields: [bankAccountId], references: [id]) /// Compte de versement.
+
+  @@index([sessionId])
+  @@index([memberId])
+  @@index([bankAccountId])
 }
