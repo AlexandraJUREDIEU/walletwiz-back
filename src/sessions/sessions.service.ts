@@ -43,6 +43,27 @@ export class SessionsService {
     })
   }
 
+  async findMine(userId: string) {
+    return this.prisma.sessions.findMany({
+      where: {
+        OR: [
+          { ownerId: userId },
+          { members: { some: { userId, invitationStatus: 'ACCEPTED' } } },
+        ],
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        owner: { select: { email: true } },
+        members: {
+          select: {
+            id: true, role: true, invitationStatus: true,
+            user: { select: { id: true, email: true, firstName: true, lastName: true } },
+          },
+        },
+      },
+    })
+  }
+
   /// Récupère toutes les sessions créées par l'utilisateur connecté
   async findAll(userId: string) {
     return this.prisma.sessions.findMany({

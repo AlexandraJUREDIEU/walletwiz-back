@@ -22,6 +22,13 @@ export class SessionsController {
     return this.sessionsService.findAll(user.userId)
   }
 
+  /// Récupère une session par son ID si elle appartient à l'utilisateur
+  @UseGuards(JwtAuthGuard)
+  @Get('my')
+  findMine(@GetUser() user: any) {
+    return this.sessionsService.findMine(user.userId)
+  }
+
   /// Met à jour une session si elle appartient à l'utilisateur
   @Patch(':id')
   update(
