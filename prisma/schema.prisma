@@ -27,6 +27,18 @@ enum InvitationStatus {
   DECLINED
 }
 
+/// Catégories possibles d’une dépense (extensible si besoin).
+enum ExpenseCategory {
+  HOUSING       /// Loyer / Crédit
+  UTILITIES     /// Eau / Électricité / Gaz
+  HEALTH        /// Mutuelle / Frais médicaux
+  FOOD          /// Courses / Restaurants
+  TRANSPORT     /// Essence / Parking / Entretien
+  SUBSCRIPTIONS /// Abonnements (Netflix, Spotify…)
+  OTHER         /// Divers
+}
+
+
 /// Représente un utilisateur inscrit dans WalletWiz.
 /// Peut créer des sessions ou être invité à en rejoindre.
 /// Sert de base à l'authentification et aux relations avec les membres.
@@ -70,6 +82,7 @@ model Sessions {
   members         Members[]                                                                        /// Membres rattachés à cette session.
   bankAccounts    BankAccounts[]        
   incomes         Incomes[]                                                                        /// Revenus rattachés à cette session.                                                           /// Comptes bancaires rattachés à cette session.
+  expenses        Expenses[]                                                                       /// Dépenses rattachées à cette session.
 }
 
 
@@ -96,6 +109,7 @@ model Members {
   user                  Users?             @relation(fields: [userId], references: [id])                          /// Utilisateur lié (si réel).
   bankAccounts          BankAccountMembers[]                                                                      /// Comptes joints auxquels ce membre est rattaché.
   incomes               Incomes[]                                                                                 /// Revenus perçus par ce membre.
+  expenses              Expenses[]                                                                                /// Dépenses portées par ce membre.
 
 
   @@unique([sessionId, userId])                                                               /// Un même user ne peut être que 1x dans une session.
@@ -121,6 +135,7 @@ model BankAccounts {
   session         Sessions            @relation(fields: [sessionId], references: [id])   /// Session à laquelle le compte appartient.
   members         BankAccountMembers[]                                                   /// Membres associés (compte joint).
   incomes         Incomes[]                                                              /// Revenus versés sur ce compte.
+  expenses        Expenses[]                                                             /// Dépenses débitées sur ce compte.
 
 
   @@index([sessionId])
@@ -162,4 +177,36 @@ model Incomes {
   @@index([sessionId])
   @@index([memberId])
   @@index([bankAccountId])
+}
+
+/// Représente une dépense rattachée à une session.
+/// La dépense appartient à un membre et est débitée d’un compte bancaire.
+model Expenses {
+
+  id            String        @id @default(cuid())                         /// ID unique de la dépense (CUID).
+  label         String                                                        /// Intitulé de la dépense (ex: "Loyer").
+  amount        Decimal       @db.Decimal(18, 2)                              /// Montant de la dépense (décimal précis).
+  day           Int                                                           /// Jour prévu (1–31).
+  category      ExpenseCategory                                               /// Catégorie de la dépense.
+  isArchived    Boolean       @default(false)                                 /// True si la dépense est archivée (inactive).
+
+  sessionId     String                                                        /// ID de la session.
+  memberId      String                                                        /// ID du membre porteur de la dépense.
+  bankAccountId String                                                        /// ID du compte bancaire débité.
+
+  createdAt     DateTime      @default(now())                                 /// Date de création.
+  updatedAt     DateTime      @updatedAt                                      /// Date de dernière mise à jour.
+
+  /// Relations
+  session       Sessions       @relation(fields: [sessionId], references: [id])     /// Session liée.
+  member        Members        @relation(fields: [memberId], references: [id])      /// Membre concerné.
+  bankAccount   BankAccounts   @relation(fields: [bankAccountId], references: [id]) /// Compte débité.
+
+  @@index([sessionId])
+  @@index([memberId])
+  @@index([bankAccountId])
+
+  /// 👮🏻‍♀️ Contrôle de doublon exact dans une même session
+  /// Empêche d’enregistrer deux fois la même dépense (même label, jour et montant).
+  @@unique([sessionId, label, day, amount])
 }
