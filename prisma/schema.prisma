@@ -15,9 +15,9 @@ datasource db {
 
 /// Rôles possibles d’un membre dans une session.
 enum MemberRole {
-  OWNER        /// Propriétaire (si tu veux le représenter aussi comme Member)
+  OWNER /// Propriétaire (si tu veux le représenter aussi comme Member)
   COLLABORATOR /// Peut éditer (collaborateur)
-  VIEWER       /// Lecture seule (lecteur)
+  VIEWER /// Lecture seule (lecteur)
 }
 
 /// Statut de l’invitation (si utilisée).
@@ -29,90 +29,85 @@ enum InvitationStatus {
 
 /// Catégories possibles d’une dépense (extensible si besoin).
 enum ExpenseCategory {
-  HOUSING       /// Loyer / Crédit
-  UTILITIES     /// Eau / Électricité / Gaz
-  HEALTH        /// Mutuelle / Frais médicaux
-  FOOD          /// Courses / Restaurants
-  TRANSPORT     /// Essence / Parking / Entretien
+  HOUSING /// Loyer / Crédit
+  UTILITIES /// Eau / Électricité / Gaz
+  HEALTH /// Mutuelle / Frais médicaux
+  FOOD /// Courses / Restaurants
+  TRANSPORT /// Essence / Parking / Entretien
   SUBSCRIPTIONS /// Abonnements (Netflix, Spotify…)
-  OTHER         /// Divers
+  OTHER /// Divers
 }
-
 
 /// Représente un utilisateur inscrit dans WalletWiz.
 /// Peut créer des sessions ou être invité à en rejoindre.
 /// Sert de base à l'authentification et aux relations avec les membres.
 model Users {
-  
-  id                        String @id @default(cuid())                     /// ID unique de l'utilisateur (CUID).
-  email                     String @unique                                  /// Adresse email de connexion (unique).
-  password                  String                                          /// Mot de passe hashé.
-  firstName                 String?                                         /// Prénom de l'utilisateur (optionnel).
-  lastName                  String?                                         /// Nom de l'utilisateur (optionnel).
-  status                    String?                                         /// Statut de compte (optionnel - ex : actif, désactivé).
-  avatarUrl                 String?                                         /// URL de l’avatar utilisateur (optionnel).
-  emailVerified             Boolean @default(false)                         /// Booléen indiquant si l’email a été vérifié.
-  verificationCode          String?                                         /// Code de vérification envoyé par email (optionnel).
-  verificationExpiresAt     DateTime?                                       /// Date d’expiration du code de vérification.
-  resetToken                String? @unique                                 /// Token de réinitialisation du mot de passe (unique, optionnel).
-  resetExpiresAt            DateTime?                                       /// Date d’expiration du token de réinitialisation.
-  createdAt                 DateTime @default(now())                        /// Date de création du compte.
-  updatedAt                 DateTime @updatedAt                             /// Date de dernière mise à jour du compte.
+  id                    String    @id @default(cuid()) /// ID unique de l'utilisateur (CUID).
+  email                 String    @unique /// Adresse email de connexion (unique).
+  password              String /// Mot de passe hashé.
+  firstName             String? /// Prénom de l'utilisateur (optionnel).
+  lastName              String? /// Nom de l'utilisateur (optionnel).
+  status                String? /// Statut de compte (optionnel - ex : actif, désactivé).
+  avatarUrl             String? /// URL de l’avatar utilisateur (optionnel).
+  emailVerified         Boolean   @default(false) /// Booléen indiquant si l’email a été vérifié.
+  verificationCode      String? /// Code de vérification envoyé par email (optionnel).
+  verificationExpiresAt DateTime? /// Date d’expiration du code de vérification.
+  resetToken            String?   @unique /// Token de réinitialisation du mot de passe (unique, optionnel).
+  resetExpiresAt        DateTime? /// Date d’expiration du token de réinitialisation.
+  createdAt             DateTime  @default(now()) /// Date de création du compte.
+  updatedAt             DateTime  @updatedAt /// Date de dernière mise à jour du compte.
 
   /// Relations
-  sessionsOwned             Sessions[] @relation("UserOwnedSessions")       /// Sessions créées par cet utilisateur.
-  membres                   Members[]                                       /// Liste des rattachements en tant que membre de sessions.
+  sessionsOwned Sessions[] @relation("UserOwnedSessions") /// Sessions créées par cet utilisateur.
+  membres       Members[] /// Liste des rattachements en tant que membre de sessions.
 }
-
 
 /// Représente une session de gestion partagée dans WalletWiz.
 /// Une session regroupe les comptes, revenus, dépenses, membres, etc.
 /// Chaque session est créée par un utilisateur (owner).
 model Sessions {
-
-  id           String    @id @default(cuid())                                                 /// ID unique de la session.
-  name         String?                                                                        /// Nom de la session (optionnel).
-  ownerId      String                                                                         /// ID de l’utilisateur créateur de la session.
-  isDefault    Boolean  @default(false)                                                       /// Indique si cette session est celle par défaut de l’utilisateur.
-  createdAt    DateTime  @default(now())                                                      /// Date de création de la session.
-  updatedAt    DateTime  @updatedAt                                                           /// Date de dernière mise à jour.
+  id        String   @id @default(cuid()) /// ID unique de la session.
+  name      String? /// Nom de la session (optionnel).
+  ownerId   String /// ID de l’utilisateur créateur de la session.
+  isDefault Boolean  @default(false) /// Indique si cette session est celle par défaut de l’utilisateur.
+  createdAt DateTime @default(now()) /// Date de création de la session.
+  updatedAt DateTime @updatedAt /// Date de dernière mise à jour.
 
   /// Relations
-  owner           Users      @relation("UserOwnedSessions", fields: [ownerId], references: [id])   /// Propriétaire de la session.
-  members         Members[]                                                                        /// Membres rattachés à cette session.
-  bankAccounts    BankAccounts[]        
-  incomes         Incomes[]                                                                        /// Revenus rattachés à cette session.                                                           /// Comptes bancaires rattachés à cette session.
-  expenses        Expenses[]                                                                       /// Dépenses rattachées à cette session.
+  owner        Users          @relation("UserOwnedSessions", fields: [ownerId], references: [id]) /// Propriétaire de la session.
+  members      Members[] /// Membres rattachés à cette session.
+  bankAccounts BankAccounts[]
+  incomes      Incomes[] /// Revenus rattachés à cette session.                                                           /// Comptes bancaires rattachés à cette session.
+  expenses     Expenses[] /// Dépenses rattachées à cette session.
+  budgets      Budgets[] /// Budgets mensuels de la session.
 }
-
 
 /// Représente un membre rattaché à une session WalletWiz.
 /// Peut être un utilisateur réel (userId) ou un membre fictif (sans user, avec un nom libre).
 /// Gère aussi la mécanique d’invitation via inviteToken (lien copiable).
 model Members {
-  id                    String           @id @default(cuid())                     /// ID unique du membre de session (CUID).
-  sessionId             String                                                    /// ID de la session concernée.
-  userId                String?                                                   /// ID de l'utilisateur WalletWiz (optionnel si membre fictif).
-  name                  String?                                                   /// Nom affiché si membre fictif ou alias (optionnel).
-  role                  MemberRole        @default(COLLABORATOR)                  /// Rôle dans la session (collaborateur, lecteur…).
-  isPlaceholder         Boolean           @default(false)                         /// True si membre fictif (non lié à un user).
-  invitationStatus      InvitationStatus  @default(PENDING)                       /// Statut de l’invitation si utilisée.
-  invitedEmail          String?                                                   /// Email d’invitation (optionnel, si utilisé).
-  inviteToken           String?           @unique                                 /// Jeton d’invitation (lien copiable), optionnel.
-  invitedAt             DateTime?                                                 /// Date d’envoi de l’invitation (optionnelle).
-  acceptedAt            DateTime?                                                 /// Date d’acceptation (optionnelle).
-  createdAt             DateTime          @default(now())                         /// Date de création du rattachement.
-  updatedAt             DateTime          @updatedAt                              /// Date de dernière mise à jour.
+  id               String           @id @default(cuid()) /// ID unique du membre de session (CUID).
+  sessionId        String /// ID de la session concernée.
+  userId           String? /// ID de l'utilisateur WalletWiz (optionnel si membre fictif).
+  name             String? /// Nom affiché si membre fictif ou alias (optionnel).
+  role             MemberRole       @default(COLLABORATOR) /// Rôle dans la session (collaborateur, lecteur…).
+  isPlaceholder    Boolean          @default(false) /// True si membre fictif (non lié à un user).
+  invitationStatus InvitationStatus @default(PENDING) /// Statut de l’invitation si utilisée.
+  invitedEmail     String? /// Email d’invitation (optionnel, si utilisé).
+  inviteToken      String?          @unique /// Jeton d’invitation (lien copiable), optionnel.
+  invitedAt        DateTime? /// Date d’envoi de l’invitation (optionnelle).
+  acceptedAt       DateTime? /// Date d’acceptation (optionnelle).
+  createdAt        DateTime         @default(now()) /// Date de création du rattachement.
+  updatedAt        DateTime         @updatedAt /// Date de dernière mise à jour.
 
   /// Relations
-  session               Sessions           @relation(fields: [sessionId], references: [id], onDelete : Cascade)   /// Session à laquelle le membre est rattaché, supprime le membre si la session est supprimé.
-  user                  Users?             @relation(fields: [userId], references: [id])                          /// Utilisateur lié (si réel).
-  bankAccounts          BankAccountMembers[]                                                                      /// Comptes joints auxquels ce membre est rattaché.
-  incomes               Incomes[]                                                                                 /// Revenus perçus par ce membre.
-  expenses              Expenses[]                                                                                /// Dépenses portées par ce membre.
+  session      Sessions             @relation(fields: [sessionId], references: [id], onDelete: Cascade) /// Session à laquelle le membre est rattaché, supprime le membre si la session est supprimé.
+  user         Users?               @relation(fields: [userId], references: [id]) /// Utilisateur lié (si réel).
+  bankAccounts BankAccountMembers[] /// Comptes joints auxquels ce membre est rattaché.
+  incomes      Incomes[] /// Revenus perçus par ce membre.
+  expenses     Expenses[] /// Dépenses portées par ce membre.
 
-
-  @@unique([sessionId, userId])                                                               /// Un même user ne peut être que 1x dans une session.
+  @@unique([sessionId, userId]) /// Un même user ne peut être que 1x dans une session.
   @@index([sessionId])
   @@index([userId])
 }
@@ -121,22 +116,20 @@ model Members {
 /// Peut être partagé (compte joint) entre plusieurs membres via la table pivot BankAccountMember.
 /// Sert de support aux flux financiers (revenus/dépenses) — non gérés pour l’instant.
 model BankAccounts {
-
-  id              String             @id @default(cuid())                       /// ID unique du compte (CUID).
-  label           String                                                        /// Libellé du compte (ex: "Compte courant").
-  bankName        String                                                        /// Nom de la banque (ex: "BNP", "Société Générale").
-  sessionId       String                                                        /// ID de la session propriétaire du compte.
-  initialBalance  Decimal            @db.Decimal(18, 2) @default(0)             /// Solde initial du compte (précis, décimal).
-  isArchived      Boolean            @default(false)                            /// Indique si le compte est archivé (inactif).
-  createdAt       DateTime           @default(now())                            /// Date de création du compte.
-  updatedAt       DateTime           @updatedAt                                 /// Date de dernière mise à jour.
+  id             String   @id @default(cuid()) /// ID unique du compte (CUID).
+  label          String /// Libellé du compte (ex: "Compte courant").
+  bankName       String /// Nom de la banque (ex: "BNP", "Société Générale").
+  sessionId      String /// ID de la session propriétaire du compte.
+  initialBalance Decimal  @default(0) @db.Decimal(18, 2) /// Solde initial du compte (précis, décimal).
+  isArchived     Boolean  @default(false) /// Indique si le compte est archivé (inactif).
+  createdAt      DateTime @default(now()) /// Date de création du compte.
+  updatedAt      DateTime @updatedAt /// Date de dernière mise à jour.
 
   /// Relations
-  session         Sessions            @relation(fields: [sessionId], references: [id])   /// Session à laquelle le compte appartient.
-  members         BankAccountMembers[]                                                   /// Membres associés (compte joint).
-  incomes         Incomes[]                                                              /// Revenus versés sur ce compte.
-  expenses        Expenses[]                                                             /// Dépenses débitées sur ce compte.
-
+  session  Sessions             @relation(fields: [sessionId], references: [id]) /// Session à laquelle le compte appartient.
+  members  BankAccountMembers[] /// Membres associés (compte joint).
+  incomes  Incomes[] /// Revenus versés sur ce compte.
+  expenses Expenses[] /// Dépenses débitées sur ce compte.
 
   @@index([sessionId])
 }
@@ -144,35 +137,34 @@ model BankAccounts {
 /// Table pivot entre BankAccount et Member pour gérer les comptes joints.
 /// Un compte peut avoir plusieurs membres, et un membre peut être rattaché à plusieurs comptes.
 model BankAccountMembers {
-  bankAccountId   String                                                     /// ID du compte.
-  memberId        String                                                     /// ID du membre.
-  createdAt       DateTime            @default(now())                        /// Date de rattachement au compte.
+  bankAccountId String /// ID du compte.
+  memberId      String /// ID du membre.
+  createdAt     DateTime @default(now()) /// Date de rattachement au compte.
 
-  bankAccount     BankAccounts         @relation(fields: [bankAccountId], references: [id], onDelete: Cascade) /// Supprime le lien si le compte est supprimé.
-  member          Members              @relation(fields: [memberId], references: [id], onDelete: Cascade)      /// Supprime le lien si le membre est supprimé.
+  bankAccount BankAccounts @relation(fields: [bankAccountId], references: [id], onDelete: Cascade) /// Supprime le lien si le compte est supprimé.
+  member      Members      @relation(fields: [memberId], references: [id], onDelete: Cascade) /// Supprime le lien si le membre est supprimé.
 
-  @@id([bankAccountId, memberId])                                                                             /// Clé composite unique.
+  @@id([bankAccountId, memberId]) /// Clé composite unique.
   @@index([memberId])
 }
 
 /// Représente un revenu rattaché à une session.
 /// Le revenu appartient à un membre et est versé sur un compte bancaire.
 model Incomes {
-
-  id            String      @id @default(cuid())                  /// ID unique du revenu (CUID).
-  label         String                                           /// Intitulé du revenu (ex: "Salaire").
-  amount        Decimal     @db.Decimal(18, 2)                    /// Montant du revenu (décimal précis).
-  day           Int                                              /// Jour du mois prévu (1–31).
-  sessionId     String                                           /// ID de la session.
-  memberId      String                                           /// ID du membre bénéficiaire.
-  bankAccountId String                                           /// ID du compte bancaire de versement.
-  createdAt     DateTime    @default(now())                      /// Date de création.
-  updatedAt     DateTime    @updatedAt                           /// Date de dernière mise à jour.
+  id            String   @id @default(cuid()) /// ID unique du revenu (CUID).
+  label         String /// Intitulé du revenu (ex: "Salaire").
+  amount        Decimal  @db.Decimal(18, 2) /// Montant du revenu (décimal précis).
+  day           Int /// Jour du mois prévu (1–31).
+  sessionId     String /// ID de la session.
+  memberId      String /// ID du membre bénéficiaire.
+  bankAccountId String /// ID du compte bancaire de versement.
+  createdAt     DateTime @default(now()) /// Date de création.
+  updatedAt     DateTime @updatedAt /// Date de dernière mise à jour.
 
   /// Relations
-  session       Sessions     @relation(fields: [sessionId], references: [id])     /// Session liée.
-  member        Members      @relation(fields: [memberId], references: [id])      /// Membre concerné.
-  bankAccount   BankAccounts @relation(fields: [bankAccountId], references: [id]) /// Compte de versement.
+  session     Sessions     @relation(fields: [sessionId], references: [id]) /// Session liée.
+  member      Members      @relation(fields: [memberId], references: [id]) /// Membre concerné.
+  bankAccount BankAccounts @relation(fields: [bankAccountId], references: [id]) /// Compte de versement.
 
   @@index([sessionId])
   @@index([memberId])
@@ -182,31 +174,48 @@ model Incomes {
 /// Représente une dépense rattachée à une session.
 /// La dépense appartient à un membre et est débitée d’un compte bancaire.
 model Expenses {
+  id         String          @id @default(cuid()) /// ID unique de la dépense (CUID).
+  label      String /// Intitulé de la dépense (ex: "Loyer").
+  amount     Decimal         @db.Decimal(18, 2) /// Montant de la dépense (décimal précis).
+  day        Int /// Jour prévu (1–31).
+  category   ExpenseCategory /// Catégorie de la dépense.
+  isArchived Boolean         @default(false) /// True si la dépense est archivée (inactive).
 
-  id            String        @id @default(cuid())                         /// ID unique de la dépense (CUID).
-  label         String                                                        /// Intitulé de la dépense (ex: "Loyer").
-  amount        Decimal       @db.Decimal(18, 2)                              /// Montant de la dépense (décimal précis).
-  day           Int                                                           /// Jour prévu (1–31).
-  category      ExpenseCategory                                               /// Catégorie de la dépense.
-  isArchived    Boolean       @default(false)                                 /// True si la dépense est archivée (inactive).
+  sessionId     String /// ID de la session.
+  memberId      String /// ID du membre porteur de la dépense.
+  bankAccountId String /// ID du compte bancaire débité.
 
-  sessionId     String                                                        /// ID de la session.
-  memberId      String                                                        /// ID du membre porteur de la dépense.
-  bankAccountId String                                                        /// ID du compte bancaire débité.
-
-  createdAt     DateTime      @default(now())                                 /// Date de création.
-  updatedAt     DateTime      @updatedAt                                      /// Date de dernière mise à jour.
+  createdAt DateTime @default(now()) /// Date de création.
+  updatedAt DateTime @updatedAt /// Date de dernière mise à jour.
 
   /// Relations
-  session       Sessions       @relation(fields: [sessionId], references: [id])     /// Session liée.
-  member        Members        @relation(fields: [memberId], references: [id])      /// Membre concerné.
-  bankAccount   BankAccounts   @relation(fields: [bankAccountId], references: [id]) /// Compte débité.
-
-  @@index([sessionId])
-  @@index([memberId])
-  @@index([bankAccountId])
+  session     Sessions     @relation(fields: [sessionId], references: [id]) /// Session liée.
+  member      Members      @relation(fields: [memberId], references: [id]) /// Membre concerné.
+  bankAccount BankAccounts @relation(fields: [bankAccountId], references: [id]) /// Compte débité.
 
   /// 👮🏻‍♀️ Contrôle de doublon exact dans une même session
   /// Empêche d’enregistrer deux fois la même dépense (même label, jour et montant).
   @@unique([sessionId, label, day, amount])
+  @@index([sessionId])
+  @@index([memberId])
+  @@index([bankAccountId])
+}
+
+/// Représente un budget mensuel pour une session WalletWiz.
+/// Un budget est unique par (sessionId, month).
+model Budgets {
+  id             String   @id @default(cuid()) /// ID unique (CUID).
+  sessionId      String /// Session à laquelle appartient ce budget.
+  month          String /// Mois au format YYYY-MM (ex: "2025-09").
+  openingBalance Decimal? @db.Decimal(18, 2) /// Solde d’ouverture du mois (optionnel).
+  notes          String? /// Notes libres (optionnel).
+  locked         Boolean  @default(false) /// Verrouillé (blocage des modifs sensibles).
+  createdAt      DateTime @default(now()) /// Date de création.
+  updatedAt      DateTime @updatedAt /// Dernière mise à jour.
+
+  /// Relations
+  session Sessions @relation(fields: [sessionId], references: [id]) /// Session liée.
+
+  @@unique([sessionId, month]) /// Un seul budget par mois et par session.
+  @@index([sessionId])
 }

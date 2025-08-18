@@ -8,9 +8,10 @@ import { MembersModule } from './members/members.module';
 import { BanksModule } from './banks/banks.module';
 import { IncomesModule } from './incomes/incomes.module';
 import { ExpensesModule } from './expenses/expenses.module';
+import { BudgetsModule } from './budgets/budgets.module';
 
 @Module({
-  imports: [UsersModule, AuthModule, SessionsModule, MembersModule, BanksModule, IncomesModule, ExpensesModule],
+  imports: [UsersModule, AuthModule, SessionsModule, MembersModule, BanksModule, IncomesModule, ExpensesModule, BudgetsModule],
   controllers: [AppController],
   providers: [AppService],
 })
