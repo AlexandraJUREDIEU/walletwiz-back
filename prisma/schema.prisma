@@ -38,6 +38,12 @@ enum ExpenseCategory {
   OTHER /// Divers
 }
 
+/// Type de mouvement financier.
+enum TransactionType {
+  INFLOW /// Entrée (crédit)
+  OUTFLOW /// Sortie (débit)
+}
+
 /// Représente un utilisateur inscrit dans WalletWiz.
 /// Peut créer des sessions ou être invité à en rejoindre.
 /// Sert de base à l'authentification et aux relations avec les membres.
@@ -76,10 +82,11 @@ model Sessions {
   /// Relations
   owner        Users          @relation("UserOwnedSessions", fields: [ownerId], references: [id]) /// Propriétaire de la session.
   members      Members[] /// Membres rattachés à cette session.
-  bankAccounts BankAccounts[]
-  incomes      Incomes[] /// Revenus rattachés à cette session.                                                           /// Comptes bancaires rattachés à cette session.
+  bankAccounts BankAccounts[] /// Comptes bancaires rattachés à cette session.
+  incomes      Incomes[] /// Revenus rattachés à cette session.                                                           
   expenses     Expenses[] /// Dépenses rattachées à cette session.
   budgets      Budgets[] /// Budgets mensuels de la session.
+  transactions Transactions[] /// Transactions rattachées à cette session.
 }
 
 /// Représente un membre rattaché à une session WalletWiz.
@@ -106,6 +113,7 @@ model Members {
   bankAccounts BankAccountMembers[] /// Comptes joints auxquels ce membre est rattaché.
   incomes      Incomes[] /// Revenus perçus par ce membre.
   expenses     Expenses[] /// Dépenses portées par ce membre.
+  transactions Transactions[] /// Transactions associées à ce membre (optionnel).
 
   @@unique([sessionId, userId]) /// Un même user ne peut être que 1x dans une session.
   @@index([sessionId])
@@ -126,10 +134,11 @@ model BankAccounts {
   updatedAt      DateTime @updatedAt /// Date de dernière mise à jour.
 
   /// Relations
-  session  Sessions             @relation(fields: [sessionId], references: [id]) /// Session à laquelle le compte appartient.
-  members  BankAccountMembers[] /// Membres associés (compte joint).
-  incomes  Incomes[] /// Revenus versés sur ce compte.
-  expenses Expenses[] /// Dépenses débitées sur ce compte.
+  session      Sessions             @relation(fields: [sessionId], references: [id]) /// Session à laquelle le compte appartient.
+  members      BankAccountMembers[] /// Membres associés (compte joint).
+  incomes      Incomes[] /// Revenus versés sur ce compte.
+  expenses     Expenses[] /// Dépenses débitées sur ce compte.
+  transactions Transactions[] /// Transactions passées sur ce compte.
 
   @@index([sessionId])
 }
@@ -214,8 +223,39 @@ model Budgets {
   updatedAt      DateTime @updatedAt /// Dernière mise à jour.
 
   /// Relations
-  session Sessions @relation(fields: [sessionId], references: [id]) /// Session liée.
+  session      Sessions       @relation(fields: [sessionId], references: [id]) /// Session liée.
+  transactions Transactions[] /// Transactions rattachées à ce budget mensuel.
 
   @@unique([sessionId, month]) /// Un seul budget par mois et par session.
   @@index([sessionId])
+}
+
+/// Mouvement réel d’argent lié à un compte bancaire.
+/// Rattaché automatiquement au budget du mois de la date d’opération.
+model Transactions {
+  id            String           @id @default(cuid()) /// ID unique (CUID).
+  sessionId     String /// ID de la session.
+  bankAccountId String /// ID du compte bancaire impacté.
+  memberId      String? /// ID du membre concerné (optionnel).
+  budgetId      String? /// ID du budget du mois correspondant (optionnel).
+  type          TransactionType /// Type: INFLOW (crédit) ou OUTFLOW (débit).
+  label         String /// Intitulé (ex: "Courses", "Salaire").
+  amount        Decimal          @db.Decimal(18, 2) /// Montant de la transaction.
+  date          DateTime /// Date de l’opération (UTC).
+  category      ExpenseCategory? /// Catégorie (souvent pour OUTFLOW).
+  isCleared     Boolean          @default(false) /// Pointée/rapprochée (true) ou non (false).
+  notes         String? /// Notes complémentaires.
+  createdAt     DateTime         @default(now()) /// Date de création.
+  updatedAt     DateTime         @updatedAt /// Dernière mise à jour.
+
+  /// Relations
+  session     Sessions     @relation(fields: [sessionId], references: [id], onDelete: Cascade) /// Session liée (cascade à la suppression).
+  bankAccount BankAccounts @relation(fields: [bankAccountId], references: [id], onDelete: Cascade) /// Compte lié (cascade à la suppression).
+  member      Members?     @relation(fields: [memberId], references: [id], onDelete: SetNull) /// Membre optionnel (NULL si supprimé).
+  budget      Budgets?     @relation(fields: [budgetId], references: [id], onDelete: SetNull) /// Budget du mois (NULL si supprimé).
+
+  @@index([sessionId])
+  @@index([bankAccountId])
+  @@index([budgetId])
+  @@index([date])
 }
