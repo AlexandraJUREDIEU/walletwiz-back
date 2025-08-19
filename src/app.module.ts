@@ -9,9 +9,10 @@ import { BanksModule } from './banks/banks.module';
 import { IncomesModule } from './incomes/incomes.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { BudgetsModule } from './budgets/budgets.module';
+import { TransactionsModule } from './transactions/transactions.module';
 
 @Module({
-  imports: [UsersModule, AuthModule, SessionsModule, MembersModule, BanksModule, IncomesModule, ExpensesModule, BudgetsModule],
+  imports: [UsersModule, AuthModule, SessionsModule, MembersModule, BanksModule, IncomesModule, ExpensesModule, BudgetsModule, TransactionsModule],
   controllers: [AppController],
   providers: [AppService],
 })
