@@ -114,6 +114,8 @@ export class MembersService {
     } else if (dto.name) {
       data.name = dto.name
       data.isPlaceholder = true
+      data.invitationStatus = 'ACCEPTED'
+      data.acceptedAt = new Date()
     } else {
       throw new BadRequestException("Fournir 'userId' OU 'invitedEmail' OU 'name'")
     }
